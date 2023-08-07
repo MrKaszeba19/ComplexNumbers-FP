@@ -76,8 +76,20 @@ function ArcCot(z : ComplexType) : ComplexType;
 function ArcCsc(z : ComplexType) : ComplexType;
 function ArcSec(z : ComplexType) : ComplexType;
 
+function Sinh(z : ComplexType) : ComplexType;
+function Cosh(z : ComplexType) : ComplexType;
+function Tanh(z : ComplexType) : ComplexType;
+function Coth(z : ComplexType) : ComplexType;
+function Csch(z : ComplexType) : ComplexType;
+function Sech(z : ComplexType) : ComplexType;
+function ArSinh(z : ComplexType) : ComplexType;
+function ArCosh(z : ComplexType) : ComplexType;
+function ArTanh(z : ComplexType) : ComplexType;
+function ArCoth(z : ComplexType) : ComplexType;
+function ArCsch(z : ComplexType) : ComplexType;
+function ArSech(z : ComplexType) : ComplexType;
+
 // TODO =============================================
-// hyperbolic and area functions
 // gamma, gammaln, lower incomplete gamma
 // beta, lower incomplete beta
 // erf, erfc
@@ -392,7 +404,7 @@ function Cos(z : ComplexType) : ComplexType;
 begin
     if (z.Im = 0) 
         then Result := system.cos(z.Re) 
-        else Result := (Exp(Imag(z)) + Exp(Imag(-z))) / 2;
+        else Result := (Exp(Imag(z)) + Exp(Imag(-z))) / 2.0;
 end;
 
 function Tan(z : ComplexType) : ComplexType;
@@ -453,6 +465,84 @@ end;
 function ArcSec(z : ComplexType) : ComplexType;
 begin
     Result := ArcCos(Inv(z));
+end;
+
+// hyperbolic functions
+
+function Sinh(z : ComplexType) : ComplexType;
+begin
+    if (z.Im = 0) 
+        then Result := Math.sinh(z.Re) 
+        else Result := (Exp(z) - Exp(-z)) / 2.0;
+end;
+
+function Cosh(z : ComplexType) : ComplexType;
+begin
+    if (z.Im = 0) 
+        then Result := Math.cosh(z.Re) 
+        else Result := (Exp(z) + Exp(-z)) / 2.0;
+end;
+
+function Tanh(z : ComplexType) : ComplexType;
+begin
+    Result := (Exp(2*z) - 1) / (Exp(2*z) + 1);
+end;
+
+function Coth(z : ComplexType) : ComplexType;
+begin
+    Result := (Exp(2*z) + 1) / (Exp(2*z) - 1);
+end;
+
+function Csch(z : ComplexType) : ComplexType;
+begin
+    Result := Inv(Sinh(z));
+end;
+
+function Sech(z : ComplexType) : ComplexType;
+begin
+    Result := Inv(Cosh(z));
+end;
+
+function ArSinh(z : ComplexType) : ComplexType;
+begin
+    if (z.Im = 0) 
+        then Result := Math.arsinh(z.Re) 
+        else Result := Ln(z + PrSquareRoot(z*z + 1));
+end;
+
+function ArCosh(z : ComplexType) : ComplexType;
+begin
+    if (z.Im = 0) and (z.Re >= 1)
+        then Result := Math.arsinh(z.Re) 
+        else Result := Ln(z + PrSquareRoot(z*z - 1));
+end;
+
+function ArTanh(z : ComplexType) : ComplexType;
+begin
+    if (z.Im = 0) and (Abs(z) < 1)
+        then Result := Math.artanh(z.Re) 
+        else Result := Ln((1+z)/(1-z)) / 2.0;
+end;
+
+function ArCoth(z : ComplexType) : ComplexType;
+begin
+    if (z.Im = 0) and (Abs(z) > 1)
+        then Result := system.ln((1+z.Re)/(1-z.Re)) / 2.0 
+        else Result := Ln((1+z)/(1-z)) / 2.0;
+end;
+
+function ArCsch(z : ComplexType) : ComplexType;
+begin
+    if (z.Im = 0) and (z.Re > 0) and (z.Re <= 1)
+        then Result := system.ln(1.0/z.Re + system.sqrt(1.0/(z.Re*z.Re) + 1))
+        else Result := Ln(Inv(z) + PrSquareRoot(Inv(z*z) + 1));
+end;
+
+function ArSech(z : ComplexType) : ComplexType;
+begin
+    if (z.Im = 0) and (z.Re <> 0) 
+        then Result := system.ln(1.0/z.Re + system.sqrt(1.0/(z.Re*z.Re) - 1))
+        else Result := Ln(Inv(z) + PrSquareRoot(Inv(z*z) - 1));
 end;
 
 

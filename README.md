@@ -18,5 +18,6 @@ I decided to write my own complex numbers mechanism, as FreePascal's built in me
 - beta, lower incomplete beta functions
 - erf, erfc
 - sinc 
+- minusOneTo
 - ComplexNumPolar (initializing a complex number with polar coords)
 - isZero, isNatural, isInteger, isReal, isImaginary, isComplex boolean functions
