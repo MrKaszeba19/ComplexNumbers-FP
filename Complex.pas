@@ -5,6 +5,7 @@ interface
 {$mode objfpc}{$H+}
 
 type RealType = type Extended;
+type IntegerType = type LongInt;
 
 type ComplexType = record
     Re : RealType;
@@ -16,6 +17,7 @@ function ComplexNum(a, b : RealType) : ComplexType;
 operator := (a : RealType) res : ComplexType;
 operator := (a : Extended) res : ComplexType;
 operator := (a : Real) res : ComplexType;
+operator := (a : IntegerType) res : ComplexType;
 operator := (a : LongInt) res : ComplexType;
 operator := (a : Int64) res : ComplexType;
 //operator := (a : Integer) res : ComplexType;
@@ -28,6 +30,7 @@ operator Explicit(a : ComplexType) : String;
 operator Explicit(a : RealType) res : ComplexType;
 operator Explicit(a : Extended) res : ComplexType;
 operator Explicit(a : Real) res : ComplexType;
+operator Explicit(a : IntegerType) res : ComplexType;
 operator Explicit(a : LongInt) res : ComplexType;
 operator Explicit(a : Int64) res : ComplexType;
 //operator Explicit(a : Integer) res : ComplexType;
@@ -55,13 +58,24 @@ function EulerNum() : ComplexType;
 function Pi() : ComplexType;
 function GoldenNum() : ComplexType;
 
-function Inv(a : ComplexType) : ComplexType;
+function isZero(z : ComplexType) : Boolean;
+function isNatural(z : ComplexType) : Boolean;
+function isInteger(z : ComplexType) : Boolean; 
+function isReal(z : ComplexType) : Boolean;
+function isImaginary(z : ComplexType) : Boolean;
+function isComplex(z : ComplexType) : Boolean;
 
+function Sqr(z : ComplexType) : ComplexType;
+function Cub(z : ComplexType) : ComplexType;
+function Inv(z : ComplexType) : ComplexType;
 function Exp(z : ComplexType) : ComplexType;
 function Ln(z : ComplexType) : ComplexType;
 function Log(a,b : ComplexType) : ComplexType;
+function IntPow(x : ComplexType; y : IntegerType) : ComplexType;
 function Pow(a,b : ComplexType) : ComplexType;
-function PrSquareRoot(a : ComplexType) : ComplexType;
+function Root(a,b : ComplexType) : ComplexType;
+function Sqrt(a : ComplexType) : ComplexType;
+function MinusOneTo(z : ComplexType) : ComplexType;
 
 function Sin(z : ComplexType) : ComplexType;
 function Cos(z : ComplexType) : ComplexType;
@@ -95,7 +109,6 @@ function ArSech(z : ComplexType) : ComplexType;
 // erf, erfc
 // sinc 
 // ComplexNumPolar
-// isZero, isNatural, isInteger, isReal, isImaginary, isComplex
 
 implementation
 
@@ -124,6 +137,12 @@ begin
 end;
 
 operator := (a : Real) res : ComplexType;
+begin
+    res.Re := a;
+    res.Im := 0;
+end;
+
+operator := (a : IntegerType) res : ComplexType;
 begin
     res.Re := a;
     res.Im := 0;
@@ -207,6 +226,11 @@ begin
     res := ComplexNum(a, 0);
 end;
 
+operator Explicit(a : IntegerType) res : ComplexType;
+begin
+    res := ComplexNum(a, 0);
+end;
+
 operator Explicit(a : LongInt) res : ComplexType;
 begin
     res := ComplexNum(a, 0);
@@ -281,7 +305,7 @@ end;
 
 function Abs(a : ComplexType) : RealType;
 begin
-    Result := sqrt(a.Re * a.Re + a.Im * a.Im);
+    Result := system.sqrt(a.Re * a.Re + a.Im * a.Im);
 end;
 
 function Arg(a : ComplexType) : RealType;
@@ -343,14 +367,53 @@ begin
     Result := 1.6180339887498948482045868343656;
 end;
 
-function Inv(a : ComplexType) : ComplexType;
+function Sqr(z : ComplexType) : ComplexType;
 begin
-    if (a.Im = 0) 
-        then Result := 1.0/a.Re
-        else Result := ComplexNum((a.Re)/(a.Re * a.Re + a.Im * a.Im), (-a.Im)/(a.Re * a.Re + a.Im * a.Im));
+    Result := z*z;
+end; 
+
+function Cub(z : ComplexType) : ComplexType;
+begin
+    Result := z*z*z;
+end; 
+
+function Inv(z : ComplexType) : ComplexType;
+begin
+    if (z.Im = 0) 
+        then Result := 1.0/z.Re
+        else Result := ComplexNum((z.Re)/(z.Re * z.Re + z.Im * z.Im), (-z.Im)/(z.Re * z.Re + z.Im * z.Im));
 end;
 
-//function MinusOneTo(a : ComplexType) : ComplexType;
+function isZero(z : ComplexType) : Boolean;
+begin
+    Result := (z.Re = 0) and (z.Im = 0);
+end;
+
+function isNatural(z : ComplexType) : Boolean;
+begin
+    Result := (isInteger(z)) and (z.Re >= 0);
+end;
+
+function isInteger(z : ComplexType) : Boolean;
+begin
+    Result := (z.Im = 0) and (z.Re = Int(z.Re));
+end;
+
+
+function isReal(z : ComplexType) : Boolean;
+begin
+    Result := (z.Im = 0);
+end;
+
+function isImaginary(z : ComplexType) : Boolean;
+begin
+    Result := (z.Re = 0) and (z.Im <> 0);
+end;
+
+function isComplex(z : ComplexType) : Boolean;
+begin
+    Result := True;
+end;
 
 
 // more functions
@@ -374,18 +437,57 @@ begin
     Result := Ln(b)/Ln(a);
 end;
 
-function Pow(a,b : ComplexType) : ComplexType;
+function IntPow(x : ComplexType; y : IntegerType) : ComplexType;
+var
+    s : ComplexType;
+    d : IntegerType;
 begin
-    Result := Exp(b * Ln(a));
+    if isZero(x) then 
+    begin
+        if (y <= 0) then s := NaN else s := 0;
+    //end else if (x*x = 1) then 
+    //begin 
+    //    // make it correct
+    //    if (x = -1) 
+    //        then s := MinusOneTo(y)
+    //        else s := 1;
+    end else begin
+        d := system.abs(y);
+        s := 1;
+        if (d > 0) then
+        begin
+            if (d mod 3 = 0) 
+                then s := Cub(intPow(x, d div 3))
+                else if (d mod 2 = 0)  
+                         then s := Sqr(IntPow(x, d div 2)) 
+                         else s := x * IntPow(x, d-1);
+            if (y < 0) then s := Inv(s);
+        end;
+    end;
+    Result := s;
 end;
 
-function PrSquareRoot(a : ComplexType) : ComplexType;
+function Pow(a,b : ComplexType) : ComplexType;
+begin
+    // add case a = -1
+    if (isInteger(b))
+    then begin
+        Result := IntPow(a, trunc(b.Re));
+    end else begin
+        Result := Exp(b * Ln(a));
+    end;
+end;
+
+function Sqrt(a : ComplexType) : ComplexType;
 begin
     // to improve
     //Result := Exp(Ln(a)/2);
     if (a.Im = 0) and (a.Re >= 0) then
     begin
         Result := system.sqrt(a.Re);
+    end else if (a.Im = 0) and (a.Re < 0) then
+    begin
+        Result := system.sqrt(-a.Re)*Imag;
     end else if (a.Im > 0) then begin
         Result := ComplexNum(system.sqrt((a.Re + Abs(a))/2), system.sqrt((-a.Re + Abs(a))/2));
     end else begin
@@ -393,24 +495,73 @@ begin
     end;
 end;
 
+function Root(a,b : ComplexType) : ComplexType;
+begin
+    if (b = 1) then
+    begin
+        Result := a;
+    end else if (b = 2) then begin
+        Result := Sqrt(a);
+    end else if (isReal(b)) then begin
+        if (b.Re < 0) then begin
+            Result := Inv(Root(a,-b.Re));
+        end else if isReal(a) then
+        begin
+            //if (a.Re < 0) then
+            //begin
+            //    if (isInteger(b)) then
+            //    begin
+            //        if (trunc(b.Re) mod 2 = 0) 
+            //            then Result := NaN // so far
+            //            else Result := -Pow(abs(a),1/b);
+            //    end else Result := Pow(A,1/b); 
+            //end else 
+            Result := Pow(a.Re,1/b.Re);
+        end else begin
+            Result := Pow(a,Inv(b.Re));
+        end;
+    end else begin
+        Result := Pow(a,Inv(b));
+    end;
+end;
+
+function MinusOneTo(z : ComplexType) : ComplexType;
+begin
+    if (isInteger(z))
+        then if (Int(z.Re) mod 2 = 0) 
+                 then Result := 1
+                 else Result := -1
+        else if (isInteger(2*z))
+                 then if (Int(2*z.Re) mod 2 = 0) 
+                          then Result := Imag
+                          else Result := -Imag
+                 else Result := Exp(z * Imag * Pi);
+end;
+
 function Sin(z : ComplexType) : ComplexType;
 begin
     if (z.Im = 0) 
-        then Result := system.sin(z.Re) 
+        then if (isInteger(z/Pi))
+                 then Result := 0
+                 else Result := system.sin(z.Re) 
         else Result := (Exp(Imag(z)) - Exp(Imag(-z))) / Imag(2);
 end;
 
 function Cos(z : ComplexType) : ComplexType;
 begin
     if (z.Im = 0) 
-        then Result := system.cos(z.Re) 
+        then if (isInteger(z/Pi-0.5))
+                 then Result := 0
+                 else Result := system.cos(z.Re) 
         else Result := (Exp(Imag(z)) + Exp(Imag(-z))) / 2.0;
 end;
 
 function Tan(z : ComplexType) : ComplexType;
 begin
     if (z.Im = 0) 
-        then Result := system.sin(z.Re)/system.cos(z.Re) 
+        then if (isInteger(z/Pi))
+                 then Result := 0
+                 else Result := system.sin(z.Re)/system.cos(z.Re) 
         else Result := -Imag * (Exp(Imag(z)) - Exp(Imag(-z))) / (Exp(Imag(z)) + Exp(Imag(-z)));
 end;
 
@@ -433,14 +584,14 @@ function ArcSin(z : ComplexType) : ComplexType;
 begin
     if (z.Im = 0) and (Abs(z) <= 1)
         then Result := Math.arcsin(z.Re)
-        else Result := -Imag * Ln(Imag(z) + PrSquareRoot(Abs(1-z*z)) * Exp((Imag*Arg(1-z*z))/2));
+        else Result := -Imag * Ln(Imag(z) + Sqrt(Abs(1-z*z)) * Exp((Imag*Arg(1-z*z))/2));
 end;
 
 function ArcCos(z : ComplexType) : ComplexType;
 begin
     Result := Pi/2 - ArcSin(z);
     //Result := Arg(Imag) - ArcSin(z);
-    //Result := -Imag * Ln(z + Imag*PrSquareRoot(Abs(1-z*z)) * Exp((Imag*Arg(1-z*z))/2));
+    //Result := -Imag * Ln(z + Imag*Sqrt(Abs(1-z*z)) * Exp((Imag*Arg(1-z*z))/2));
 end;
 
 function ArcTan(z : ComplexType) : ComplexType;
@@ -507,14 +658,14 @@ function ArSinh(z : ComplexType) : ComplexType;
 begin
     if (z.Im = 0) 
         then Result := Math.arsinh(z.Re) 
-        else Result := Ln(z + PrSquareRoot(z*z + 1));
+        else Result := Ln(z + Sqrt(z*z + 1));
 end;
 
 function ArCosh(z : ComplexType) : ComplexType;
 begin
     if (z.Im = 0) and (z.Re >= 1)
         then Result := Math.arsinh(z.Re) 
-        else Result := Ln(z + PrSquareRoot(z*z - 1));
+        else Result := Ln(z + Sqrt(z*z - 1));
 end;
 
 function ArTanh(z : ComplexType) : ComplexType;
@@ -535,14 +686,14 @@ function ArCsch(z : ComplexType) : ComplexType;
 begin
     if (z.Im = 0) and (z.Re > 0) and (z.Re <= 1)
         then Result := system.ln(1.0/z.Re + system.sqrt(1.0/(z.Re*z.Re) + 1))
-        else Result := Ln(Inv(z) + PrSquareRoot(Inv(z*z) + 1));
+        else Result := Ln(Inv(z) + Sqrt(Inv(z*z) + 1));
 end;
 
 function ArSech(z : ComplexType) : ComplexType;
 begin
     if (z.Im = 0) and (z.Re <> 0) 
         then Result := system.ln(1.0/z.Re + system.sqrt(1.0/(z.Re*z.Re) - 1))
-        else Result := Ln(Inv(z) + PrSquareRoot(Inv(z*z) - 1));
+        else Result := Ln(Inv(z) + Sqrt(Inv(z*z) - 1));
 end;
 
 
