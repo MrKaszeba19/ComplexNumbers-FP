@@ -55,9 +55,9 @@ function ImPart(a : ComplexType) : RealType;
 
 function Imag() : ComplexType;
 function Imag(a : ComplexType) : ComplexType;
-function EulerNum() : ComplexType;
-function Pi() : ComplexType;
-function GoldenNum() : ComplexType;
+function EulerNum() : RealType;
+function Pi() : RealType;
+function GoldenNum() : RealType;
 
 function isZero(z : ComplexType) : Boolean;
 function isNatural(z : ComplexType) : Boolean;
@@ -109,11 +109,15 @@ function ArCoth(z : ComplexType) : ComplexType;
 function ArCsch(z : ComplexType) : ComplexType;
 function ArSech(z : ComplexType) : ComplexType;
 
+function Gamma(z : ComplexType) : ComplexType;
+function GammaLn(z : ComplexType) : ComplexType;
+
 // TODO =============================================
 // gamma, gammaln, lower incomplete gamma
 // beta, lower incomplete beta
 // erf, erfc
 // sinc 
+// riemann zeta
 
 implementation
 
@@ -370,19 +374,19 @@ begin
     Result := ComplexNum(-a.Im,a.Re);
 end;
 
-function EulerNum() : ComplexType;
+function EulerNum() : RealType;
 begin
-    Result := Exp(1);
+    Result := Exp(1).Re;
 end;
 
-function Pi() : ComplexType;
+function Pi() : RealType;
 begin
     Result := 3.1415926535897932384626433832795;
     //Result := Arg(-1);
     //Result := system.Pi;
 end;
 
-function GoldenNum() : ComplexType;
+function GoldenNum() : RealType;
 begin
     Result := 1.6180339887498948482045868343656;
 end;
@@ -782,6 +786,93 @@ begin
     if (z.Im = 0) and (z.Re <> 0) 
         then Result := system.ln(1.0/z.Re + system.sqrt(1.0/(z.Re*z.Re) - 1))
         else Result := Ln(Inv(z) + Sqrt(Inv(z*z) - 1));
+end;
+
+// gamma function
+
+function fmod(x, y : Extended) : Extended;
+begin
+    Result := x - y * Int(x/y);
+end;
+
+function fdiv(x, y : Extended) : Extended;
+begin
+    Result := Int(x/y);
+end;
+
+function fact(x : Extended) : Extended;
+var
+    s : Extended;
+    i : LongInt;
+begin
+    s := 1;
+    i := 1; 
+    while i <= abs(x) do begin
+        s := s * i;
+        i := i + 1;
+    end;
+    Result := s;
+end;
+
+function Gamma(z : ComplexType) : ComplexType;
+var
+	limit, n : IntegerType;
+	s, s1    : ComplexType;
+	epsilon  : RealType;
+begin
+    if (isInteger(z)) and (z.Re > 0) 
+    then Result := fact(z.Re-1)
+    else if (z = 0.5) 
+    then Result := system.sqrt(Pi)
+    else if (z.Im = 0) and (z.Re > 0) and (fmod(z.Re,1) = 0.5) 
+    then Result := (z-1)*Gamma(z-1)
+    else begin
+        if (Abs(z) > 100) 
+            then limit := trunc(100000*Abs(z))+1
+		    else limit := trunc(1000000*Abs(z))+1;
+		n := 1;
+		s := 1.0;
+		epsilon := 50.0;
+		while (n < limit) 
+        //and (epsilon > 0.0000001) do
+        and (epsilon > 0.0000000001) do
+		begin
+			s1 := s;
+			s := s * ((Pow(1+1/n, z))/(1+z/n));
+			epsilon := Abs(s-s1);
+			n := n + 1;
+		end;
+		Result := s/z;
+    end;
+end;
+
+function loggamma_real(x : RealType) : RealType;
+{ Log of Gamma(x), exponentiate this to get Gamma(x), x! =
+Gamma(x+1),
+  very accurate approximation: 1+epsilon, abs(epsilon) < 2.1E-10
+  Based on Numerical Recipes, by Press, Flannery, Teukolsky,
+  and Vetterling; first edition, page 157 and 704; but greatly
+cleaned up, by Jud McCranie }
+const stp =   2.50662827465;
+      c1  =  76.18009173;
+      c2  = -86.50532033;
+      c3  =  24.01409822;
+      c4  =  -1.231739516;
+      c5  =   1.20858003E-3;
+      c6  =  -5.36382E-6;
+var ser : RealType;
+begin { --- log gamma --- }
+    ser := 1.0 + c1 / x + c2 / (x + 1.0) + c3 / (x + 2.0) +
+             c4 / (x + 3.0) + c5 / (x + 4.0) + c6 / (x + 5.0);
+    Result := (x - 0.5) * system.ln( x + 4.5) - x - 4.5 + system.ln( stp * ser);
+end; { --- log gamma --- }
+
+function GammaLn(z : ComplexType) : ComplexType;
+begin
+    //if (isReal(z)) and (z.Re > 0)
+    //    then Result := loggamma_real(z.Re)
+    //    else Result := Ln(Gamma(z));
+    Result := Ln(Gamma(z));
 end;
 
 

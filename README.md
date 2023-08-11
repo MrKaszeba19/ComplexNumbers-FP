@@ -16,10 +16,13 @@ I decided to write my own complex numbers mechanism, as FreePascal's built in me
 - MinusOneTo, ImagTo, MinusImagTo
 - isZero, isNatural, isInteger, isReal, isImaginary, isComplex boolean functions
 - ComplexNumPolar (initializing a complex number with polar coords)
+- gamma, gammaln functions
 
 ### Todo list
-- gamma, gammaln, lower incomplete gamma functions
+- lower incomplete gamma functions
 - beta, lower incomplete beta functions
 - round
 - erf, erfc
 - sinc 
+- Riemann's Zeta function
+- Lambert's W function
