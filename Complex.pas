@@ -13,6 +13,7 @@ type ComplexType = record
 end;
 
 function ComplexNum(a, b : RealType) : ComplexType;
+function ComplexNumPolar(r, a : RealType) : ComplexType;
 
 operator := (a : RealType) res : ComplexType;
 operator := (a : Extended) res : ComplexType;
@@ -67,15 +68,20 @@ function isComplex(z : ComplexType) : Boolean;
 
 function Sqr(z : ComplexType) : ComplexType;
 function Cub(z : ComplexType) : ComplexType;
+function Pow4(z : ComplexType) : ComplexType;
+function Pow5(z : ComplexType) : ComplexType;
 function Inv(z : ComplexType) : ComplexType;
 function Exp(z : ComplexType) : ComplexType;
 function Ln(z : ComplexType) : ComplexType;
 function Log(a,b : ComplexType) : ComplexType;
 function IntPow(x : ComplexType; y : IntegerType) : ComplexType;
 function Pow(a,b : ComplexType) : ComplexType;
+function RealRoot(a,b : RealType) : ComplexType;
 function Root(a,b : ComplexType) : ComplexType;
 function Sqrt(a : ComplexType) : ComplexType;
 function MinusOneTo(z : ComplexType) : ComplexType;
+function ImagTo(z : ComplexType) : ComplexType;
+function MinusImagTo(z : ComplexType) : ComplexType;
 
 function Sin(z : ComplexType) : ComplexType;
 function Cos(z : ComplexType) : ComplexType;
@@ -108,7 +114,6 @@ function ArSech(z : ComplexType) : ComplexType;
 // beta, lower incomplete beta
 // erf, erfc
 // sinc 
-// ComplexNumPolar
 
 implementation
 
@@ -120,6 +125,11 @@ function ComplexNum(a, b : RealType) : ComplexType;
 begin
     Result.Re := a;
     Result.Im := b;
+end;
+
+function ComplexNumPolar(r, a : RealType) : ComplexType;
+begin
+    Result := system.abs(r) * (Cos(a) + Imag(Sin(a)));
 end;
 
 // assigments
@@ -291,14 +301,24 @@ end;
 
 operator * (a : ComplexType; b : ComplexType) res : ComplexType;
 begin
-    res.Re := a.Re * b.Re - a.Im * b.Im;
-    res.Im := a.Im * b.Re + a.Re * b.Im;
+    if (a.Im = 0) and (b.Im = 0) then begin
+        res.Re := a.Re * b.Re;
+        res.Im := 0;
+    end else begin
+        res.Re := a.Re * b.Re - a.Im * b.Im;
+        res.Im := a.Im * b.Re + a.Re * b.Im;
+    end;
 end;
 
 operator / (a : ComplexType; b : ComplexType) res : ComplexType;
 begin
-    res.Re := (a.Re * b.Re + a.Im * b.Im) / (b.Re * b.Re + b.Im * b.Im);
-    res.Im := (a.Im * b.Re - a.Re * b.Im) / (b.Re * b.Re + b.Im * b.Im);
+    if (a.Im = 0) and (b.Im = 0) then begin
+        res.Re := a.Re / b.Re;
+        res.Im := 0;
+    end else begin
+        res.Re := (a.Re * b.Re + a.Im * b.Im) / (b.Re * b.Re + b.Im * b.Im);
+        res.Im := (a.Im * b.Re - a.Re * b.Im) / (b.Re * b.Re + b.Im * b.Im);
+    end;
 end;
 
 // basic functions
@@ -377,6 +397,16 @@ begin
     Result := z*z*z;
 end; 
 
+function Pow4(z : ComplexType) : ComplexType;
+begin
+    Result := z*z*z*z;
+end; 
+
+function Pow5(z : ComplexType) : ComplexType;
+begin
+    Result := z*z*z*z*z;
+end; 
+
 function Inv(z : ComplexType) : ComplexType;
 begin
     if (z.Im = 0) 
@@ -445,12 +475,6 @@ begin
     if isZero(x) then 
     begin
         if (y <= 0) then s := NaN else s := 0;
-    //end else if (x*x = 1) then 
-    //begin 
-    //    // make it correct
-    //    if (x = -1) 
-    //        then s := MinusOneTo(y)
-    //        else s := 1;
     end else begin
         d := system.abs(y);
         s := 1;
@@ -467,14 +491,38 @@ begin
     Result := s;
 end;
 
+function unitcirclepowTo(a,b : ComplexType) : ComplexType;
+begin
+    if (a = 1) 
+    then Result := 1
+    else if (a = -1) 
+    then Result := MinusOneTo(b)
+    else if (a = Imag) 
+    then Result := ImagTo(b)
+    else if (a = -Imag) 
+    then Result := MinusImagTo(b)
+    else Result := Exp(b * Ln(a));
+end;
+
 function Pow(a,b : ComplexType) : ComplexType;
 begin
-    // add case a = -1
+    //if (isInteger(b))
+    //then begin
+    //    Result := IntPow(a, trunc(b.Re));
+    //end else begin
+    //    Result := Exp(b * Ln(a));
+    //end;
     if (isInteger(b))
     then begin
-        Result := IntPow(a, trunc(b.Re));
+        //if (Abs(a) = 1) 
+        if (a*a*a*a = 1)
+            then Result := unitcirclepowTo(a,b)
+            else Result := IntPow(a, trunc(b.Re));
     end else begin
-        Result := Exp(b * Ln(a));
+        //if (Abs(a) = 1) 
+        if (a*a*a*a = 1)
+            then Result := unitcirclepowTo(a,b)
+            else Result := Exp(b * Ln(a));
     end;
 end;
 
@@ -495,6 +543,20 @@ begin
     end;
 end;
 
+function RealRoot(a,b : RealType) : ComplexType;
+begin
+    if (b = 1) then
+    begin
+        Result := a;
+    end else if (b = 2) then begin
+        Result := Sqrt(a);
+    end else if (b < 0) then begin
+        Result := Inv(RealRoot(a,b));
+    end else if (a < 0) and (isInteger(b)) and (trunc(b) mod 2 = 1)
+        then Result := -Pow(system.abs(a),Inv(b))
+        else Result := Pow(a,Inv(b)); 
+end;
+
 function Root(a,b : ComplexType) : ComplexType;
 begin
     if (b = 1) then
@@ -505,18 +567,10 @@ begin
     end else if (isReal(b)) then begin
         if (b.Re < 0) then begin
             Result := Inv(Root(a,-b.Re));
-        end else if isReal(a) then
+        end else if isInteger(b) then
         begin
-            //if (a.Re < 0) then
-            //begin
-            //    if (isInteger(b)) then
-            //    begin
-            //        if (trunc(b.Re) mod 2 = 0) 
-            //            then Result := NaN // so far
-            //            else Result := -Pow(abs(a),1/b);
-            //    end else Result := Pow(A,1/b); 
-            //end else 
-            Result := Pow(a.Re,1/b.Re);
+            Result := ComplexNumPolar(RealRoot(Abs(a), b.Re).Re, Arg(a)/b.Re);
+            //Result := Pow(a,Inv(b.Re));
         end else begin
             Result := Pow(a,Inv(b.Re));
         end;
@@ -536,6 +590,40 @@ begin
                           then Result := Imag
                           else Result := -Imag
                  else Result := Exp(z * Imag * Pi);
+end;
+
+function ImagTo(z : ComplexType) : ComplexType;
+var 
+    a : Integer;
+begin
+    if (isInteger(z))
+        then begin
+            a := trunc(z.Re);
+            a := ((a mod 4) + 4) mod 4;
+            case a of 
+                0 : Result := 1;
+                1 : Result := Imag;
+                2 : Result := -1;
+                3 : Result := -Imag;
+            end; 
+        end else Result := Exp(z * Imag * Pi * 0.5);
+end;
+
+function MinusImagTo(z : ComplexType) : ComplexType;
+var 
+    a : Integer;
+begin
+    if (isInteger(z))
+        then begin
+            a := trunc(z.Re);
+            a := ((a mod 4) + 4) mod 4;
+            case a of 
+                0 : Result := 1;
+                1 : Result := -Imag;
+                2 : Result := -1;
+                3 : Result := Imag;
+            end; 
+        end else Result := Exp(- z * Imag * Pi * 0.5);
 end;
 
 function Sin(z : ComplexType) : ComplexType;

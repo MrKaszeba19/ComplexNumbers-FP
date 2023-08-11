@@ -13,13 +13,13 @@ I decided to write my own complex numbers mechanism, as FreePascal's built in me
 - exponential and logarithmic functions
 - trigonometric functions and their inverses
 - hyperbolic and area functions
-- MinusOneTo
+- MinusOneTo, ImagTo, MinusImagTo
 - isZero, isNatural, isInteger, isReal, isImaginary, isComplex boolean functions
+- ComplexNumPolar (initializing a complex number with polar coords)
 
 ### Todo list
-- ImagTo, MinusImagTo
 - gamma, gammaln, lower incomplete gamma functions
 - beta, lower incomplete beta functions
+- round
 - erf, erfc
 - sinc 
-- ComplexNumPolar (initializing a complex number with polar coords)
