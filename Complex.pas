@@ -790,25 +790,39 @@ end;
 
 // gamma function
 
-function fmod(x, y : Extended) : Extended;
+function fmod(x, y : RealType) : RealType;
 begin
     Result := x - y * Int(x/y);
 end;
 
-function fdiv(x, y : Extended) : Extended;
+function fdiv(x, y : RealType) : RealType;
 begin
     Result := Int(x/y);
 end;
 
-function fact(x : Extended) : Extended;
+function fact(x : RealType) : RealType;
 var
-    s : Extended;
-    i : LongInt;
+    s : RealType;
+    i : IntegerType;
 begin
     s := 1;
     i := 1; 
     while i <= abs(x) do begin
         s := s * i;
+        i := i + 1;
+    end;
+    Result := s;
+end;
+
+function factln(x : RealType) : RealType;
+var
+    s : RealType;
+    i : IntegerType;
+begin
+    s := 0;
+    i := 1; 
+    while i <= abs(x) do begin
+        s := s + system.ln(i);
         i := i + 1;
     end;
     Result := s;
@@ -846,33 +860,19 @@ begin
     end;
 end;
 
-function loggamma_real(x : RealType) : RealType;
-{ Log of Gamma(x), exponentiate this to get Gamma(x), x! =
-Gamma(x+1),
-  very accurate approximation: 1+epsilon, abs(epsilon) < 2.1E-10
-  Based on Numerical Recipes, by Press, Flannery, Teukolsky,
-  and Vetterling; first edition, page 157 and 704; but greatly
-cleaned up, by Jud McCranie }
-const stp =   2.50662827465;
-      c1  =  76.18009173;
-      c2  = -86.50532033;
-      c3  =  24.01409822;
-      c4  =  -1.231739516;
-      c5  =   1.20858003E-3;
-      c6  =  -5.36382E-6;
-var ser : RealType;
-begin { --- log gamma --- }
-    ser := 1.0 + c1 / x + c2 / (x + 1.0) + c3 / (x + 2.0) +
-             c4 / (x + 3.0) + c5 / (x + 4.0) + c6 / (x + 5.0);
-    Result := (x - 0.5) * system.ln( x + 4.5) - x - 4.5 + system.ln( stp * ser);
-end; { --- log gamma --- }
-
 function GammaLn(z : ComplexType) : ComplexType;
 begin
-    //if (isReal(z)) and (z.Re > 0)
-    //    then Result := loggamma_real(z.Re)
-    //    else Result := Ln(Gamma(z));
-    Result := Ln(Gamma(z));
+    if (isInteger(z)) and (z.Re > 0) 
+    then Result := factln(z.Re-1)
+    else if (z = 0.5) 
+    then 
+        //Result := system.ln(system.sqrt(Pi))
+        Result := 0.5723649429247000870717136756765
+    else if (z.Im = 0) and (z.Re > 0) and (fmod(z.Re,1) = 0.5) 
+    then Result := Ln(z-1) + GammaLn(z-1)
+    else begin
+        Result := Ln(Gamma(z));
+    end;
 end;
 
 
