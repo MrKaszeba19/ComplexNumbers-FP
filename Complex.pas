@@ -63,6 +63,7 @@ function isZero(z : ComplexType) : Boolean;
 function isNatural(z : ComplexType) : Boolean;
 function isInteger(z : ComplexType) : Boolean; 
 function isReal(z : ComplexType) : Boolean;
+function isNotReal(z : ComplexType) : Boolean;
 function isImaginary(z : ComplexType) : Boolean;
 function isComplex(z : ComplexType) : Boolean;
 
@@ -111,11 +112,13 @@ function ArSech(z : ComplexType) : ComplexType;
 
 function Gamma(z : ComplexType) : ComplexType;
 function GammaLn(z : ComplexType) : ComplexType;
+function Erf(z : ComplexType) : ComplexType;
+function Erfc(z : ComplexType) : ComplexType;
+function Erfi(z : ComplexType) : ComplexType;
 
 // TODO =============================================
 // gamma, gammaln, lower incomplete gamma
 // beta, lower incomplete beta
-// erf, erfc
 // sinc 
 // riemann zeta
 
@@ -437,6 +440,11 @@ end;
 function isReal(z : ComplexType) : Boolean;
 begin
     Result := (z.Im = 0);
+end;
+
+function isNotReal(z : ComplexType) : Boolean;
+begin
+    Result := (z.Im <> 0);
 end;
 
 function isImaginary(z : ComplexType) : Boolean;
@@ -873,6 +881,58 @@ begin
     else begin
         Result := Ln(Gamma(z));
     end;
+end;
+
+function Erf(z : ComplexType) : ComplexType;
+var
+    limit, n : IntegerType;
+    s1, s, p : ComplexType;
+	epsilon  : RealType;
+    k        : IntegerType;
+begin
+    if z = 0 then
+    begin
+        Result := 0;
+    //end else if (z.Re < 0) then
+    //begin
+    //    Result := -Erf(-z);
+    //end else if (z.Im < 0) then
+    //begin
+    //    Result := Conj(Erf(Conj(z)));
+    end else begin
+        if (Abs(z) > 100) 
+            then limit := trunc(10000*Abs(z))+1
+		    else limit := trunc(100000*Abs(z))+1;
+        //writeln('lim ' , limit);
+        s := 0;
+        epsilon := 50.0;
+        n := 0;
+        while (n < limit) 
+        //and (epsilon > 0.0000001) do
+        and (epsilon > 0.0000000001) do
+        begin
+            s1 := s;
+            p := 1.0;
+            for k := 1 to n do
+                p := p * (-z*z)/k;
+            s := s + p * (z/(2*n+1));
+            epsilon := Abs(s-s1);
+            //writeln('eps ' , epsilon, ' at ', n);
+            n := n + 1;
+        end;
+        s := s * 1.1283791670955125738961589031215;
+        Result := s;
+    end;
+end;
+
+function Erfc(z : ComplexType) : ComplexType;
+begin
+    Result := 1.0 - Erf(z);
+end;
+
+function Erfi(z : ComplexType) : ComplexType;
+begin
+    Result := -Imag(Erf(Imag(z)));
 end;
 
 
