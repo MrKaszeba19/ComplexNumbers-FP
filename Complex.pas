@@ -852,6 +852,7 @@ begin
         if (Abs(z) > 100) 
             then limit := trunc(100000*Abs(z))+1
 		    else limit := trunc(1000000*Abs(z))+1;
+        //writeln('lim ' , limit);
 		n := 1;
 		s := 1.0;
 		epsilon := 50.0;
@@ -862,8 +863,10 @@ begin
 			s1 := s;
 			s := s * ((Pow(1+1/n, z))/(1+z/n));
 			epsilon := Abs(s-s1);
+            //writeln('eps ' , epsilon, ' at ', n);
 			n := n + 1;
 		end;
+        //writeln('fin ' , epsilon, ' at ', n-1);
 		Result := s/z;
     end;
 end;
@@ -920,6 +923,7 @@ begin
             //writeln('eps ' , epsilon, ' at ', n);
             n := n + 1;
         end;
+        //writeln('fin ' , epsilon, ' at ', n-1);
         s := s * 1.1283791670955125738961589031215;
         Result := s;
     end;
