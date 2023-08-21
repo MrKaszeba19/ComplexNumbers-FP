@@ -23,6 +23,9 @@ begin
     writeln();
     writeln(AnsiString(Gamma(-0.5)));
     writeln(AnsiString(Gamma(Imag)));
+    writeln(AnsiString(Gamma(2*Imag)));
+    writeln(AnsiString(Gamma(-2*Imag)));
+    writeln(AnsiString(Gamma(3.5*Imag)));
     writeln();
     writeln(AnsiString(GammaLn(0.5)));
     writeln(AnsiString(GammaLn(1)));
@@ -106,7 +109,7 @@ begin
     writeln(AnsiString(Erfc(Imag(-0.5))));
     writeln(AnsiString(Erfc(Imag(0))));
     writeln(AnsiString(Erfc(Imag(0.5))));
-    writeln(AnsiString(Erfc(Imag(11.0))));
+    writeln(AnsiString(Erfc(Imag(1.0))));
     writeln(AnsiString(Erfi(-1.0)));
     writeln(AnsiString(Erfi(-0.5)));
     writeln(AnsiString(Erfi(0)));
@@ -117,5 +120,6 @@ begin
     writeln(AnsiString(Erfi(Imag(0))));
     writeln(AnsiString(Erfi(Imag(0.5))));
     writeln(AnsiString(Erfi(Imag(1.0))));
-
+    writeln();
+    writeln(AnsiString(Erfc(Imag(11.0))));
 end.

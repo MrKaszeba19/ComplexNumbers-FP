@@ -26,3 +26,7 @@ I decided to write my own complex numbers mechanism, as FreePascal's built in me
 - sinc 
 - Riemann's Zeta function
 - Lambert's W function
+
+## References
+
+1. [W.H. Press, S.A. Teukolsky, W.T. Vetterling, B.P. Flannery; 'Numerical Recipes. The Art of Scientific Computing. Third Edition'; Cambridge University Press; 2007](http://numerical.recipes/book.html)

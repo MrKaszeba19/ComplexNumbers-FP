@@ -5,7 +5,8 @@ interface
 {$mode objfpc}{$H+}
 
 type RealType = type Extended;
-type IntegerType = type LongInt;
+//type IntegerType = type LongInt;
+type IntegerType = type Int64;
 
 type ComplexType = record
     Re : RealType;
@@ -57,6 +58,7 @@ function Imag() : ComplexType;
 function Imag(a : ComplexType) : ComplexType;
 function EulerNum() : RealType;
 function Pi() : RealType;
+function EulerMascheroni() : RealType;
 function GoldenNum() : RealType;
 
 function isZero(z : ComplexType) : Boolean;
@@ -117,7 +119,7 @@ function Erfc(z : ComplexType) : ComplexType;
 function Erfi(z : ComplexType) : ComplexType;
 
 // TODO =============================================
-// gamma, gammaln, lower incomplete gamma
+// lower incomplete gamma
 // beta, lower incomplete beta
 // sinc 
 // riemann zeta
@@ -392,6 +394,11 @@ end;
 function GoldenNum() : RealType;
 begin
     Result := 1.6180339887498948482045868343656;
+end;
+
+function EulerMascheroni() : RealType;
+begin
+    Result := 0.5772156649015328606065120900824;
 end;
 
 function Sqr(z : ComplexType) : ComplexType;
@@ -841,50 +848,64 @@ var
 	limit, n : IntegerType;
 	s, s1    : ComplexType;
 	epsilon  : RealType;
+    a, b     : array of IntegerType;
 begin
-    if (isInteger(z)) and (z.Re > 0) 
-    then Result := fact(z.Re-1)
+    if (isInteger(z)) then
+        if (z.Re > 0) 
+            then Result := fact(z.Re-1)
+            else Result := NaN
     else if (z = 0.5) 
-    then Result := system.sqrt(Pi)
-    else if (z.Im = 0) and (z.Re > 0) and (fmod(z.Re,1) = 0.5) 
+    then Result := 1.7724538509055160272981674833411 // sqrt(pi)
+    else if (z.Re > 1) 
     then Result := (z-1)*Gamma(z-1)
-    else begin
-        if (Abs(z) > 100) 
-            then limit := trunc(100000*Abs(z))+1
-		    else limit := trunc(1000000*Abs(z))+1;
-        //writeln('lim ' , limit);
-		n := 1;
-		s := 1.0;
-		epsilon := 50.0;
-		while (n < limit) 
-        //and (epsilon > 0.0000001) do
-        and (epsilon > 0.0000000001) do
-		begin
-			s1 := s;
-			s := s * ((Pow(1+1/n, z))/(1+z/n));
-			epsilon := Abs(s-s1);
-            //writeln('eps ' , epsilon, ' at ', n);
-			n := n + 1;
-		end;
-        //writeln('fin ' , epsilon, ' at ', n-1);
-		Result := s/z;
+    else if (z.Re < 0) 
+    then Result := Gamma(z+1)/z
+    else Result := Exp(GammaLn(z));
+end;
+
+// from http://numerical.recipes/book.html
+function LogGamma_real(z : ComplexType) : ComplexType;
+var
+    j              : IntegerType;
+    x, y, tmp, ser : ComplexType;
+    cof            : Array of ComplexType;
+begin 
+    cof := [57.1562356658629235, -59.5979603554754912, 14.1360979747417471,
+    -0.491913816097620199,0.339946499848118887e-4, 0.465236289270485756e-4, -0.983744753048795646e-4, 
+    0.158088703224912494e-3, -0.210264441724104883e-3, 0.217439618115212643e-3,-0.164318106536763890e-3, 
+    0.844182239838527433e-4,-0.261908384015814087e-4,0.368991826595316234e-5];
+    //if (xx <= 0) throw('bad arg in gammln');
+    x := z;
+    y := x;
+    tmp := x + 5.24218750000000000; //rational 671/128.
+    tmp := (x+0.5)*Ln(tmp)-tmp;
+    ser := 0.999999999999997092;
+    for j := 0 to 13 do
+    begin
+        ser := ser + cof[j]/(y+1);
+        y := y+1;
     end;
+    Result := tmp+Ln(2.5066282746310005*ser/x);
 end;
 
 function GammaLn(z : ComplexType) : ComplexType;
 begin
-    if (isInteger(z)) and (z.Re > 0) 
-    then Result := factln(z.Re-1)
+    if (z = 1)
+    then Result := 0
     else if (z = 0.5) 
     then 
         //Result := system.ln(system.sqrt(Pi))
-        Result := 0.5723649429247000870717136756765
-    else if (z.Im = 0) and (z.Re > 0) and (fmod(z.Re,1) = 0.5) 
+        Result := 0.5723649429247000870717136756765 // ln(sqrt(pi))
+    else if (z.Re > 1) //and (z.Im = 0) and (fmod(z.Re,1) = 0.5) 
     then Result := Ln(z-1) + GammaLn(z-1)
+    else if (z.Re < 0) //and (z.Im = 0) and (fmod(z.Re,1) = 0.5) 
+    then Result := GammaLn(z+1) - Ln(z)
     else begin
-        Result := Ln(Gamma(z));
+        Result := LogGamma_real(z);
     end;
 end;
+
+// error functions
 
 function Erf(z : ComplexType) : ComplexType;
 var
@@ -896,12 +917,6 @@ begin
     if z = 0 then
     begin
         Result := 0;
-    //end else if (z.Re < 0) then
-    //begin
-    //    Result := -Erf(-z);
-    //end else if (z.Im < 0) then
-    //begin
-    //    Result := Conj(Erf(Conj(z)));
     end else begin
         if (Abs(z) > 100) 
             then limit := trunc(10000*Abs(z))+1
@@ -912,7 +927,8 @@ begin
         n := 0;
         while (n < limit) 
         //and (epsilon > 0.0000001) do
-        and (epsilon > 0.0000000001) do
+        //and (epsilon > 0.0000000001) do
+        and (epsilon > 0.0000000000001) do
         begin
             s1 := s;
             p := 1.0;
@@ -924,7 +940,7 @@ begin
             n := n + 1;
         end;
         //writeln('fin ' , epsilon, ' at ', n-1);
-        s := s * 1.1283791670955125738961589031215;
+        s := s * 1.1283791670955125738961589031215; // 2/sqrt(pi)
         Result := s;
     end;
 end;
@@ -938,6 +954,117 @@ function Erfi(z : ComplexType) : ComplexType;
 begin
     Result := -Imag(Erf(Imag(z)));
 end;
+
+// TODO
+// beta functions
+
+{*
+// s.Re > 0
+// 
+function LowerGamma(s, x : ComplexType) : ComplexType;
+var
+    t, sum  : Extended;
+	epsilon : Extended;
+begin
+    if (s = 1) then
+    begin
+        //writeln('chuj3');
+        //writeln('s=',s:2:5,' x=',x:2:5);
+        Result := 1.0 - exp(-x);
+    end else if (x = 0) then begin
+        //writeln('chuj2');
+        // check it
+        Result := 0;
+    end else if (s = 0.5) then begin
+        Result := Erf(sqrt(x)) * 1.7724538509055160272981674833411; // sqrt(pi)
+    end else begin
+        //writeln('chuj');
+	    epsilon := 0.0001*trunc(x+1);
+        //epsilon := 0.0001;
+        sum := 0;
+        //writeln('s=',s:2:5,' x=',x:2:5);
+        t := 0;
+        while (t <= x) do
+        begin
+            //writeln('s=',s:2:5,' x=',t:2:5);
+            //writeln(pow2(t, s-1));
+            sum := sum + epsilon*(pow(t, s-1)*Exp(-t));
+            //sum := sum + (pow2(t, s-1)*exp(-t));
+            t := t + epsilon;
+            Result := sum;
+        end;
+    end;
+end;
+
+function vbeta(x, y : Extended) : Extended;
+//var
+//    eps  : Extended;
+//    t, s : Extended;
+begin
+    if (isInteger(x)) and (isInteger(y)) then
+    begin
+        Result := ((x+y)/(x*y))*(1/(newton_int(x+y, x)))
+    end else begin
+        //eps := 0.0001;
+        //s := 0;
+        //t := 0;
+        //while (t < 1) do
+        //begin
+        //    s := s + eps*(pow2(t, x-1) * pow2(1-t, y-1));
+        //    t := t + eps;
+        //end;
+        //Result := s;
+        Result := exp(LogGamma(x) + LogGamma(y) - LogGamma(x+y));
+    end;
+end;
+
+function vinbeta(x, a, b : Extended) : Extended;
+var
+    eps  : Extended;
+    t, s : Extended;
+begin
+    eps := 0.0001;
+    s := 0;
+    t := 0;
+    while (t < x) do
+    begin
+        s := s + eps*(pow2(t, a-1) * pow2(1-t, b-1));
+        t := t + eps;
+    end;
+    Result := s;
+end;
+
+function vrinbeta(x, a, b : Extended) : Extended;
+begin
+    //writeln(x:2:6);
+    //writeln(vinbeta(x, a, b):2:8, #9, vbeta(a, b):2:8);
+    //writeln(vinbeta(x, a, b)/vbeta(a, b):2:8);
+         if (x = 0)   then Result := 0
+    else if (x = 1)   then Result := 1
+    else if (b = 1)   then Result := pow2(x, a)
+    else if (a = 1)   then Result := 1 - pow2(1-x, b)
+    //else if (x > 0.5) then Result := 1 - vrinbeta(1.0-x, b, a)
+    else Result := vinbeta(x, a, b)/vbeta(a, b);
+    //Result := vinbeta(x, a, b)/vbeta(a, b);
+end;
+
+function gammat(nu : Extended) : Extended;
+var
+    s : Extended;
+begin
+    if (fmod(nu, 2) = 0) 
+        then s := 1/(2*sqrt(nu))
+        else s := 1/(PI*sqrt(nu));
+    nu := nu - 1;
+    while (nu >= 2) do
+    begin
+        s := s * nu/(nu-1);
+        nu := nu - 2;
+    end;
+    Result := s;
+end;
+*}
+
 
 
 end.
