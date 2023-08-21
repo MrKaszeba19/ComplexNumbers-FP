@@ -118,8 +118,10 @@ function Erf(z : ComplexType) : ComplexType;
 function Erfc(z : ComplexType) : ComplexType;
 function Erfi(z : ComplexType) : ComplexType;
 
+function LowerGamma(s, x : ComplexType) : ComplexType;
+function UpperGamma(s, x : ComplexType) : ComplexType;
+
 // TODO =============================================
-// lower incomplete gamma
 // beta, lower incomplete beta
 // sinc 
 // riemann zeta
@@ -844,11 +846,6 @@ begin
 end;
 
 function Gamma(z : ComplexType) : ComplexType;
-var
-	limit, n : IntegerType;
-	s, s1    : ComplexType;
-	epsilon  : RealType;
-    a, b     : array of IntegerType;
 begin
     if (isInteger(z)) then
         if (z.Re > 0) 
@@ -958,44 +955,57 @@ end;
 // TODO
 // beta functions
 
-{*
 // s.Re > 0
 // 
+function UpperGamma(s, x : ComplexType) : ComplexType;
+var
+    t, sum  : ComplexType;
+	epsilon : ComplexType;
+    n       : IntegerType = 50;
+begin
+    if (s.Re < 0)
+    then Result := NaN
+    else if (s = 0) and ((not isReal(x)) or (x.Re <= 0))
+    then Result := NaN
+    else if (s = 1) then
+    begin
+        Result := Exp(-x);
+    end else if (x = 0) then begin
+        Result := Gamma(s);
+    end else if (s = 0.5) then begin
+        Result := Erfc(sqrt(x)) * 1.7724538509055160272981674833411; // sqrt(pi)
+    end else begin
+        sum := (2*n+1)+x-s;
+        while (n > 0) do
+        begin
+            sum := (2*n-1)+x-s + (n*(s-n))/sum;
+            n := n-1;
+        end;
+        Result := (Pow(x,s) * Exp(-x))/sum;
+    end;
+end;
+
 function LowerGamma(s, x : ComplexType) : ComplexType;
 var
-    t, sum  : Extended;
-	epsilon : Extended;
+    t, sum  : ComplexType;
+	epsilon : ComplexType;
 begin
+    if (s.Re <= 0)
+    then Result := NaN
+    else 
     if (s = 1) then
     begin
-        //writeln('chuj3');
-        //writeln('s=',s:2:5,' x=',x:2:5);
-        Result := 1.0 - exp(-x);
+        Result := 1.0 - Exp(-x);
     end else if (x = 0) then begin
-        //writeln('chuj2');
-        // check it
         Result := 0;
     end else if (s = 0.5) then begin
         Result := Erf(sqrt(x)) * 1.7724538509055160272981674833411; // sqrt(pi)
     end else begin
-        //writeln('chuj');
-	    epsilon := 0.0001*trunc(x+1);
-        //epsilon := 0.0001;
-        sum := 0;
-        //writeln('s=',s:2:5,' x=',x:2:5);
-        t := 0;
-        while (t <= x) do
-        begin
-            //writeln('s=',s:2:5,' x=',t:2:5);
-            //writeln(pow2(t, s-1));
-            sum := sum + epsilon*(pow(t, s-1)*Exp(-t));
-            //sum := sum + (pow2(t, s-1)*exp(-t));
-            t := t + epsilon;
-            Result := sum;
-        end;
+        Result := Gamma(s) - UpperGamma(s,x);
     end;
 end;
 
+{*
 function vbeta(x, y : Extended) : Extended;
 //var
 //    eps  : Extended;

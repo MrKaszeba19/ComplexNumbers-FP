@@ -3,7 +3,7 @@
 **Author**: Paul Lipkowski
 
 ## About
-I decided to write my own complex numbers mechanism, as FreePascal's built in mechanism isn't sufficient enough for me.  
+I decided to write my own complex numbers mechanism, as FreePascal's built-in mechanism isn't sufficient enough for me.  
 
 ## Features
 
@@ -17,15 +17,16 @@ I decided to write my own complex numbers mechanism, as FreePascal's built in me
 - isZero, isNatural, isInteger, isReal, isNotReal, isImaginary, isComplex boolean functions
 - ComplexNumPolar (initializing a complex number with polar coords)
 - gamma, gammaln functions
+- lower and upper incomplete gamma functions
 - erf, erfc, erfi functions
 
 ### Todo list
-- lower incomplete gamma functions
 - beta, lower incomplete beta functions
 - round
 - sinc 
 - Riemann's Zeta function
-- Lambert's W function
+- Lambert's W function with branches
+- Ei function with branches
 
 ## References
 
