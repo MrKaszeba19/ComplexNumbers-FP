@@ -117,9 +117,11 @@ function GammaLn(z : ComplexType) : ComplexType;
 function Erf(z : ComplexType) : ComplexType;
 function Erfc(z : ComplexType) : ComplexType;
 function Erfi(z : ComplexType) : ComplexType;
-
 function LowerGamma(s, x : ComplexType) : ComplexType;
 function UpperGamma(s, x : ComplexType) : ComplexType;
+function Beta(x, y : ComplexType) : ComplexType;
+function IncBeta(x, a, b : ComplexType) : ComplexType;
+function RegIncBeta(x, a, b : ComplexType) : ComplexType;
 
 // TODO =============================================
 // beta, lower incomplete beta
@@ -699,8 +701,6 @@ end;
 function ArcCos(z : ComplexType) : ComplexType;
 begin
     Result := Pi/2 - ArcSin(z);
-    //Result := Arg(Imag) - ArcSin(z);
-    //Result := -Imag * Ln(z + Imag*Sqrt(Abs(1-z*z)) * Exp((Imag*Arg(1-z*z))/2));
 end;
 
 function ArcTan(z : ComplexType) : ComplexType;
@@ -891,11 +891,10 @@ begin
     then Result := 0
     else if (z = 0.5) 
     then 
-        //Result := system.ln(system.sqrt(Pi))
         Result := 0.5723649429247000870717136756765 // ln(sqrt(pi))
-    else if (z.Re > 1) //and (z.Im = 0) and (fmod(z.Re,1) = 0.5) 
+    else if (z.Re > 1)
     then Result := Ln(z-1) + GammaLn(z-1)
-    else if (z.Re < 0) //and (z.Im = 0) and (fmod(z.Re,1) = 0.5) 
+    else if (z.Re < 0) 
     then Result := GammaLn(z+1) - Ln(z)
     else begin
         Result := LogGamma_real(z);
@@ -923,8 +922,6 @@ begin
         epsilon := 50.0;
         n := 0;
         while (n < limit) 
-        //and (epsilon > 0.0000001) do
-        //and (epsilon > 0.0000000001) do
         and (epsilon > 0.0000000000001) do
         begin
             s1 := s;
@@ -933,10 +930,8 @@ begin
                 p := p * (-z*z)/k;
             s := s + p * (z/(2*n+1));
             epsilon := Abs(s-s1);
-            //writeln('eps ' , epsilon, ' at ', n);
             n := n + 1;
         end;
-        //writeln('fin ' , epsilon, ' at ', n-1);
         s := s * 1.1283791670955125738961589031215; // 2/sqrt(pi)
         Result := s;
     end;
@@ -959,9 +954,8 @@ end;
 // 
 function UpperGamma(s, x : ComplexType) : ComplexType;
 var
-    t, sum  : ComplexType;
-	epsilon : ComplexType;
-    n       : IntegerType = 50;
+    sum : ComplexType;
+    n   : IntegerType = 50;
 begin
     if (s.Re < 0)
     then Result := NaN
@@ -986,9 +980,6 @@ begin
 end;
 
 function LowerGamma(s, x : ComplexType) : ComplexType;
-var
-    t, sum  : ComplexType;
-	epsilon : ComplexType;
 begin
     if (s.Re <= 0)
     then Result := NaN
@@ -1005,75 +996,66 @@ begin
     end;
 end;
 
-{*
-function vbeta(x, y : Extended) : Extended;
-//var
-//    eps  : Extended;
-//    t, s : Extended;
+// beta function with some help
+function newton_intt(n, k : ComplexType) : ComplexType;
 begin
-    if (isInteger(x)) and (isInteger(y)) then
-    begin
-        Result := ((x+y)/(x*y))*(1/(newton_int(x+y, x)))
-    end else begin
-        //eps := 0.0001;
-        //s := 0;
-        //t := 0;
-        //while (t < 1) do
-        //begin
-        //    s := s + eps*(pow2(t, x-1) * pow2(1-t, y-1));
-        //    t := t + eps;
-        //end;
-        //Result := s;
-        Result := exp(LogGamma(x) + LogGamma(y) - LogGamma(x+y));
+    if (k.Re > n.Re) then 
+        Result := 1.0/0.0
+    else if (k = 0) then 
+        Result := 1
+    else if (k.Re > n.Re/2) then
+        Result := newton_intt(n,n-k)
+    else 
+        Result := n * newton_intt(n-1,k-1) / k;
+end;
+
+function Beta(x, y : ComplexType) : ComplexType;
+begin
+    if (isInteger(x)) and (isInteger(y)) 
+    then Result := ((x+y)/(x*y))*Inv(newton_intt(x+y, x))
+    //else if (x.Re < 0) and (y.Re < 0)
+    //then Result := NaN
+    else begin
+        Result := Exp(GammaLn(x) + GammaLn(y) - GammaLn(x+y));
     end;
 end;
 
-function vinbeta(x, a, b : Extended) : Extended;
+// incomplete beta function
+function IncBeta(x, a, b : ComplexType) : ComplexType;
 var
-    eps  : Extended;
-    t, s : Extended;
+    sum : ComplexType;
+    n   : IntegerType = 50;
+    m   : IntegerType;
 begin
-    eps := 0.0001;
-    s := 0;
-    t := 0;
-    while (t < x) do
-    begin
-        s := s + eps*(pow2(t, a-1) * pow2(1-t, b-1));
-        t := t + eps;
+    if (x = 1)
+    then Result := Beta(a,b)
+    else if (x = 0)
+    then Result := 0
+    else if (x.Re > ((a+1)/(a+b+2)).Re) 
+    then Result := Beta(a,b) - IncBeta(1-x,b,a)
+    else begin
+        m := (n+1) div 2;
+        sum := (-1.0*(a+b+m)*(a+m)*x)/((a + 2*m + 1)*(a + 2*m));
+        while (n > 0) do
+        begin
+            m := n div 2;
+            if (n mod 2 = 0) 
+                then sum := 1 + ((m*(b-m)*x)/((a + 2*m - 1)*(a + 2*m)))/sum
+                else sum := 1 + ((-(a+b+m)*(a+m)*x)/((a + 2*m + 1)*(a + 2*m)))/sum;
+            n := n-1;
+        end;
+        Result := (Pow(x,a) * Pow(1-x, b))/(a*sum);
     end;
-    Result := s;
 end;
 
-function vrinbeta(x, a, b : Extended) : Extended;
+function RegIncBeta(x, a, b : ComplexType) : ComplexType;
 begin
-    //writeln(x:2:6);
-    //writeln(vinbeta(x, a, b):2:8, #9, vbeta(a, b):2:8);
-    //writeln(vinbeta(x, a, b)/vbeta(a, b):2:8);
          if (x = 0)   then Result := 0
     else if (x = 1)   then Result := 1
-    else if (b = 1)   then Result := pow2(x, a)
-    else if (a = 1)   then Result := 1 - pow2(1-x, b)
-    //else if (x > 0.5) then Result := 1 - vrinbeta(1.0-x, b, a)
-    else Result := vinbeta(x, a, b)/vbeta(a, b);
-    //Result := vinbeta(x, a, b)/vbeta(a, b);
+    else if (b = 1)   then Result := Pow(x, a)
+    else if (a = 1)   then Result := 1 - Pow(1-x, b)
+    else Result := IncBeta(x, a, b)/Beta(a, b);
 end;
-
-function gammat(nu : Extended) : Extended;
-var
-    s : Extended;
-begin
-    if (fmod(nu, 2) = 0) 
-        then s := 1/(2*sqrt(nu))
-        else s := 1/(PI*sqrt(nu));
-    nu := nu - 1;
-    while (nu >= 2) do
-    begin
-        s := s * nu/(nu-1);
-        nu := nu - 2;
-    end;
-    Result := s;
-end;
-*}
 
 
 

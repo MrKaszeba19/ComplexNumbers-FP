@@ -19,9 +19,9 @@ I decided to write my own complex numbers mechanism, as FreePascal's built-in me
 - gamma, gammaln functions
 - lower and upper incomplete gamma functions
 - erf, erfc, erfi functions
+- beta, incomplete beta, regularized incomplete beta functions
 
 ### Todo list
-- beta, lower incomplete beta functions
 - round
 - sinc 
 - Riemann's Zeta function

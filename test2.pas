@@ -5,6 +5,7 @@ uses Complex;
 begin
     writeln(AnsiString(ComplexNumPolar(1, Pi/4)));
     writeln();
+    writeln('gamma');
     //writeln(AnsiString());
     //writeln(AnsiString(Gamma(0)));
     writeln(AnsiString(Gamma(1/4)));
@@ -63,6 +64,7 @@ begin
     writeln(AnsiString(Ln(Gamma(65))));
     writeln(AnsiString(Ln(Gamma(171))));
     writeln();
+    writeln('erf');
     writeln(AnsiString(Erf(-1)));
     writeln(AnsiString(Erf(-0.9)));
     writeln(AnsiString(Erf(-0.8)));
@@ -130,6 +132,7 @@ begin
     writeln();
     writeln(AnsiString(Erfc(Imag(11.0))));
     writeln();
+    writeln('lowergamma');
     writeln(AnsiString(LowerGamma(0, 0)));
     writeln(AnsiString(LowerGamma(0.5, 0)));
     writeln(AnsiString(LowerGamma(1, 0)));
@@ -146,4 +149,17 @@ begin
     writeln(AnsiString(LowerGamma(0.3, 3)));
     writeln(AnsiString(LowerGamma(1.7, 1.6)));
     writeln(AnsiString(LowerGamma(1+Imag, 2.1)));
+    writeln();
+    writeln('beta');
+    writeln(AnsiString(Beta(0.5, 0.5)));
+    writeln(AnsiString(Beta(1, 1)));
+    writeln(AnsiString(Beta(2, 5)));
+    writeln(AnsiString(Beta(1+Imag, 2.1)));
+    writeln();
+    writeln(AnsiString(IncBeta(0,2,5)));
+    writeln(AnsiString(IncBeta(1/2,2,5)));
+    writeln(AnsiString(IncBeta(1,2,5)));
+    writeln(AnsiString(IncBeta(0,0.4,1.3)));
+    writeln(AnsiString(IncBeta(1/2,0.4,1.3)));
+    writeln(AnsiString(IncBeta(1,0.4,1.3)));
 end.
