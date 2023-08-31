@@ -123,6 +123,8 @@ function Beta(x, y : ComplexType) : ComplexType;
 function IncBeta(x, a, b : ComplexType) : ComplexType;
 function RegIncBeta(x, a, b : ComplexType) : ComplexType;
 
+function RiemannZeta(z : ComplexType) : ComplexType;
+
 // TODO =============================================
 // beta, lower incomplete beta
 // sinc 
@@ -1055,6 +1057,135 @@ begin
     else if (b = 1)   then Result := Pow(x, a)
     else if (a = 1)   then Result := 1 - Pow(1-x, b)
     else Result := IncBeta(x, a, b)/Beta(a, b);
+end;
+
+// riemann zeta function
+
+//function bernoulli_num(n : ComplexType) : ComplexType;
+//var
+//    i, j   : IntegerType;
+//    s1, s2 : ComplexType;
+//begin
+//    s1 := 0;
+//    for i := 0 to trunc(n.Re) do
+//    begin
+//        s2 := 0;
+//        for j := 0 to i do
+//            s2 := s2 + MinusOneTo(j) * Pow(j+1, n) * newton_intt(i,j);
+//        s1 := s1 + Inv(i+1) * s2;
+//    end;
+//    Result := s1;
+//end;
+
+// make it in an array
+//function bernoulli_num(n : ComplexType) : ComplexType;
+//var
+//    i : IntegerType;
+//    s : ComplexType;
+//begin
+//         if (n = 0) then Result := 1
+//    else if (n = 1) then Result := 0.5
+//    else if (n = 2) then Result := 0.1666666666666666666666666666667  // 1/6
+//    else if (n = 4) then Result := -0.0333333333333333333333333333333 // -1/30
+//    else if (n = 6) then Result := 0.02380952380952380952380952380952 // 1/42
+//    else if (n = 8) then Result := -0.0333333333333333333333333333333 // -1/30
+//    else if (n = 10) then Result := 0.0757575757575757575757575757576 // 5/66
+//    else if (isInteger(n) and (fmod(n.Re,2) = 1)) then Result := 0
+//    else begin
+//        s := 0;
+//        for i := 0 to trunc(n.Re)-1 do
+//            s := s + newton_intt(n,i) * bernoulli_num(i) / (n - i + 1);
+//        Result := 1 - s;
+//    end;
+//end;
+
+function bernoulli_num(n : IntegerType) : ComplexType;
+var
+    i, k : IntegerType;
+    s    : ComplexType;
+    B    : array of ComplexType;
+begin
+    writeln('ber');
+    if (n > 10)
+        then SetLength(B, n+1)
+        else SetLength(B, 10+1);
+    B[0] := 1;
+    B[1] := 0.5;
+    B[2] := 0.1666666666666666666666666666667;  // 1/6
+    B[4] := -0.0333333333333333333333333333333; // -1/30
+    B[6] := 0.02380952380952380952380952380952; // 1/42
+    B[8] := -0.0333333333333333333333333333333; // -1/30
+    B[10] := 0.0757575757575757575757575757576; // 5/66
+    i := 3;
+    while (i <= n) do
+    begin
+        B[i] := 0;
+        i := i + 2;
+    end;
+    if (n >= 12) and (n mod 2 = 0) then
+    begin
+        i := 12;
+        while (i <= n) do
+        begin
+            B[i] := 1;
+            s := 0.0;
+            for k := 0 to i-1 do
+                s := s + 1.0 * B[k] * newton_intt(i,k) / (i - k + 1.0);
+            B[i] := 1-s;
+            //writeln('b(',i,') = ', AnsiString(B[i]));
+            i := i+2;
+        end;
+    end;
+    //writeln('bernoulli(',n,') = ', AnsiString(B[n]));
+    Result := B[n];
+end;
+
+function RiemannZeta(z : ComplexType) : ComplexType;
+var
+    limit, n : IntegerType;
+    sum      : ComplexType;
+begin
+         if (z = -1) then Result := -1.0/12
+    else if (z = 0) then Result := -1.0/2
+    else if (z = 1) then Result := Infinity
+    else if (z = 2) then Result := 1.644934066848226436472415166646025  // Pi*Pi/6
+    else if (z = 3) then Result := 1.20205690315959428539973816151145   // Apery's constant
+    else if (z = 4) then Result := 1.0823232337111381915160036965411679 // pi^4 / 90
+    else if (z.Re > 1) then
+    begin
+        //if (isInteger(z)) and (fmod(z.Re,2) = 0)
+        //then begin
+        //    n := trunc(z.Re) div 2;
+        //    Result := (MinusOneTo(n+1) * bernoulli_num(2*n) * Pow(2*Pi, 2*n))/(2 * fact(2*n));
+        //end else begin
+            //if (z.Re > 50)
+            //    then limit := 1000
+            //    else limit := 10000 + trunc((51.0 - z.Re)/10);
+            if (z.Re > 100)
+                then limit := 100
+                else limit := trunc(1000000/(z.Re*z.Re));
+            sum := 0;
+            for n := 1 to limit do
+                sum := sum + Inv(Pow(n, z));
+            Result := sum;
+        //end;
+    end else if (z.Re > 0) and (z.Re < 1) then begin
+        //if (z.Re > 100)
+        //    then limit := 100
+        //    else limit := trunc(1000000/(z.Re*z.Re));
+        limit := 10000;
+        // improve it
+        sum := 0;
+        for n := 1 to limit do
+            sum := sum + Inv(Pow(n, z)) * MinusOneTo(n+1);
+        Result := sum / (1 - Pow(2, 1-z));
+    end else begin
+        if (isInteger(z)) 
+        then if (fmod(z.Re,2) = 0)
+             then Result := 0
+             else Result := MinusOneTo(-z.Re) * bernoulli_num(trunc(1 - z.Re))/(1 - z.Re) // to reinvent B(n)/n
+        else Result := NaN; // so far, check functional equation
+    end;
 end;
 
 

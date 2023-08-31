@@ -1,0 +1,56 @@
+program NAME;
+
+uses Complex;
+
+begin
+    writeln(AnsiString(ComplexNumPolar(1, Pi/4)));
+    writeln();
+    writeln('riemann zeta');
+    writeln(AnsiString(RiemannZeta(-1)));
+    writeln(AnsiString(RiemannZeta(0)));
+    writeln(AnsiString(RiemannZeta(1)));
+    writeln(AnsiString(RiemannZeta(2)));
+    writeln(AnsiString(RiemannZeta(3)));
+    writeln(AnsiString(RiemannZeta(4)));
+    writeln(AnsiString(RiemannZeta(5)));
+    writeln(AnsiString(RiemannZeta(6)));
+    writeln(AnsiString(RiemannZeta(7)));
+    writeln(AnsiString(RiemannZeta(8)));
+    writeln(AnsiString(RiemannZeta(9)));
+    writeln(AnsiString(RiemannZeta(10)));
+    writeln(AnsiString(RiemannZeta(11)));
+    writeln(AnsiString(RiemannZeta(12)));
+    writeln(AnsiString(RiemannZeta(16)));
+    writeln(AnsiString(RiemannZeta(32)));
+    writeln(AnsiString(RiemannZeta(48)));
+    writeln(AnsiString(RiemannZeta(49)));
+    writeln(AnsiString(RiemannZeta(50)));
+    writeln(AnsiString(RiemannZeta(99)));
+    writeln(AnsiString(RiemannZeta(100)));
+    writeln();
+    writeln(AnsiString(RiemannZeta(-2)));
+    writeln(AnsiString(RiemannZeta(-3)));
+    writeln(AnsiString(RiemannZeta(-4)));
+    writeln(AnsiString(RiemannZeta(-5)));
+    writeln(AnsiString(RiemannZeta(-6)));
+    writeln(AnsiString(RiemannZeta(-7)));
+    writeln(AnsiString(RiemannZeta(-8)));
+    writeln(AnsiString(RiemannZeta(-9)));
+    writeln(AnsiString(RiemannZeta(-10)));
+    writeln(AnsiString(RiemannZeta(-11)));
+    writeln(AnsiString(RiemannZeta(-12)));
+    writeln(AnsiString(RiemannZeta(-16)));
+    writeln(AnsiString(RiemannZeta(-32)));
+    writeln(AnsiString(RiemannZeta(-48)));
+    writeln(AnsiString(RiemannZeta(-49)));
+    writeln(AnsiString(RiemannZeta(-50)));
+    writeln(AnsiString(RiemannZeta(-99)));
+    writeln(AnsiString(RiemannZeta(-100)));
+    writeln();
+    writeln(AnsiString(RiemannZeta(1.5)));
+    writeln(AnsiString(RiemannZeta(1.25)));
+    writeln(AnsiString(RiemannZeta(2+Imag)));
+    writeln(AnsiString(RiemannZeta(3-2*Imag)));
+    writeln(AnsiString(RiemannZeta(0.5)));
+    writeln(AnsiString(RiemannZeta(0.25)));
+end.
