@@ -20,13 +20,19 @@ I decided to write my own complex numbers mechanism, as FreePascal's built-in me
 - lower and upper incomplete gamma functions
 - erf, erfc, erfi functions
 - beta, incomplete beta, regularized incomplete beta functions
+- E_1 (exponential integral)
+- sinc function
+- Si, Ci functions (sine integral, cosine integral)
+
+### Partly implemented
+- Riemann's Zeta function (may return wrong values)
 
 ### Todo list
 - round
-- sinc 
-- Riemann's Zeta function
 - Lambert's W function with branches
 - Ei function with branches
+- li (logarithm integral)
+- Newton symbol `(z,n)`
 
 ## References
 

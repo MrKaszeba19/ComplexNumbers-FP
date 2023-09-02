@@ -112,6 +112,13 @@ function ArCoth(z : ComplexType) : ComplexType;
 function ArCsch(z : ComplexType) : ComplexType;
 function ArSech(z : ComplexType) : ComplexType;
 
+function Sinc(z : ComplexType) : ComplexType;
+function Ei1(z : ComplexType) : ComplexType; // E_1(x) exponential integral
+function SinInt(z : ComplexType) : ComplexType; // Si(x)
+function SinInt2(z : ComplexType) : ComplexType; // si(x)
+function CosInt(z : ComplexType) : ComplexType; // Ci(x)
+function CosInt2(z : ComplexType) : ComplexType; // Cin(x)
+
 function Gamma(z : ComplexType) : ComplexType;
 function GammaLn(z : ComplexType) : ComplexType;
 function Erf(z : ComplexType) : ComplexType;
@@ -123,16 +130,26 @@ function Beta(x, y : ComplexType) : ComplexType;
 function IncBeta(x, a, b : ComplexType) : ComplexType;
 function RegIncBeta(x, a, b : ComplexType) : ComplexType;
 
+function bernoulli_num(n : IntegerType) : ComplexType;
 function RiemannZeta(z : ComplexType) : ComplexType;
-
-// TODO =============================================
-// beta, lower incomplete beta
-// sinc 
-// riemann zeta
 
 implementation
 
 uses Math, SysUtils;
+
+const 
+    C_PI     = 3.1415926535897932384626433832795;    // pi
+    C_HALFPI = 1.57079632679489661923132169163975;   // pi/2
+    C_QURTPI = 0.7853981633974483096156608458198757; // pi/4
+    C_SQRTPI = 1.7724538509055160272981674833411;    // sqrt(pi)
+    C_2DSQPI = 1.1283791670955125738961589031215;    // 2/sqrt(pi)
+    C_LNSQPI = 0.5723649429247000870717136756765;    // ln(sqrt(pi))
+    C_SQPID6 = 1.644934066848226436472415166646025;  // Pi*Pi/6
+    C_QUPI90 = 1.0823232337111381915160036965411679; // pi^4 / 90
+    C_APERY  = 1.20205690315959428539973816151145;   // Apery's constant
+    C_PHI    = 1.6180339887498948482045868343656;    // phi - Golden ratio
+    C_EM     = 0.5772156649015328606065120900824;    // Euler-Mascheroni constant
+
 
 // construction
 
@@ -702,7 +719,7 @@ end;
 
 function ArcCos(z : ComplexType) : ComplexType;
 begin
-    Result := Pi/2 - ArcSin(z);
+    Result := C_HALFPI - ArcSin(z);
 end;
 
 function ArcTan(z : ComplexType) : ComplexType;
@@ -715,7 +732,7 @@ end;
 function ArcCot(z : ComplexType) : ComplexType;
 begin
     if (z.Im = 0) 
-        then Result := Pi/2 - system.arctan(z.Re)
+        then Result := C_HALFPI - system.arctan(z.Re)
         else Result := Inv(Imag(2))*Ln((z+Imag)/(z-Imag));
 end;
 
@@ -807,6 +824,13 @@ begin
         else Result := Ln(Inv(z) + Sqrt(Inv(z*z) - 1));
 end;
 
+function Sinc(z : ComplexType) : ComplexType;
+begin
+    if (z = 0)
+    then Result := 1
+    else Result := Sin(z)/z;
+end;
+
 // gamma function
 
 function fmod(x, y : RealType) : RealType;
@@ -847,6 +871,58 @@ begin
     Result := s;
 end;
 
+function powbyfact(z : ComplexType; n : IntegerType) : ComplexType; // z^n/n!
+var
+    s : ComplexType;
+    i : IntegerType;
+begin
+    s := 1;
+    i := 1; 
+    while i <= abs(n) do begin
+        s := s * z / i;
+        i := i + 1;
+    end;
+    Result := s;
+end;
+
+function Ei1(z : ComplexType) : ComplexType;
+var
+    sum : ComplexType;
+    n   : IntegerType = 50;
+begin
+    sum := z+(n+1)/(n+2);
+    while (n > 0) do
+    begin
+        sum := z+n/(1+n/sum);
+        n := n-1;
+    end;
+    Result := Exp(-z)/sum;
+end;
+
+function SinInt(z : ComplexType) : ComplexType; // Si(x)
+begin
+    if (z.Re < 0) 
+    then Result := -SinInt(-z)
+    else Result := C_HALFPI + Ei1(Imag(z)).Im;
+end;
+
+function SinInt2(z : ComplexType) : ComplexType; // si(x)
+begin
+    Result := SinInt2(z) - C_HALFPI;
+end;
+
+function CosInt(z : ComplexType) : ComplexType; // Ci(x)
+begin
+    if (z.Re < 0) 
+    then Result := CosInt(-z) - Imag(C_PI)
+    else Result := -Ei1(Imag(z)).Re;
+end;
+
+function CosInt2(z : ComplexType) : ComplexType; // Cin(x)
+begin
+    Result := C_EM + Ln(z) - CosInt(z);
+end;
+
 function Gamma(z : ComplexType) : ComplexType;
 begin
     if (isInteger(z)) then
@@ -854,7 +930,7 @@ begin
             then Result := fact(z.Re-1)
             else Result := NaN
     else if (z = 0.5) 
-    then Result := 1.7724538509055160272981674833411 // sqrt(pi)
+    then Result := C_SQRTPI // sqrt(pi)
     else if (z.Re > 1) 
     then Result := (z-1)*Gamma(z-1)
     else if (z.Re < 0) 
@@ -893,7 +969,7 @@ begin
     then Result := 0
     else if (z = 0.5) 
     then 
-        Result := 0.5723649429247000870717136756765 // ln(sqrt(pi))
+        Result := C_LNSQPI // ln(sqrt(pi))
     else if (z.Re > 1)
     then Result := Ln(z-1) + GammaLn(z-1)
     else if (z.Re < 0) 
@@ -934,7 +1010,7 @@ begin
             epsilon := Abs(s-s1);
             n := n + 1;
         end;
-        s := s * 1.1283791670955125738961589031215; // 2/sqrt(pi)
+        s := s * C_2DSQPI; // 2/sqrt(pi)
         Result := s;
     end;
 end;
@@ -969,7 +1045,7 @@ begin
     end else if (x = 0) then begin
         Result := Gamma(s);
     end else if (s = 0.5) then begin
-        Result := Erfc(sqrt(x)) * 1.7724538509055160272981674833411; // sqrt(pi)
+        Result := Erfc(sqrt(x)) * C_SQRTPI; // sqrt(pi)
     end else begin
         sum := (2*n+1)+x-s;
         while (n > 0) do
@@ -992,7 +1068,7 @@ begin
     end else if (x = 0) then begin
         Result := 0;
     end else if (s = 0.5) then begin
-        Result := Erf(sqrt(x)) * 1.7724538509055160272981674833411; // sqrt(pi)
+        Result := Erf(sqrt(x)) * C_SQRTPI; // sqrt(pi)
     end else begin
         Result := Gamma(s) - UpperGamma(s,x);
     end;
@@ -1000,6 +1076,8 @@ end;
 
 // beta function with some help
 function newton_intt(n, k : ComplexType) : ComplexType;
+var
+    i : IntegerType;
 begin
     if (k.Re > n.Re) then 
         Result := 1.0/0.0
@@ -1007,16 +1085,18 @@ begin
         Result := 1
     else if (k.Re > n.Re/2) then
         Result := newton_intt(n,n-k)
-    else 
-        Result := n * newton_intt(n-1,k-1) / k;
+    else begin
+        Result := 1;
+        for i := 1 to trunc(k.Re) do
+            Result := Result * (n - i + 1) / i;
+    end;
 end;
+
 
 function Beta(x, y : ComplexType) : ComplexType;
 begin
     if (isInteger(x)) and (isInteger(y)) 
     then Result := ((x+y)/(x*y))*Inv(newton_intt(x+y, x))
-    //else if (x.Re < 0) and (y.Re < 0)
-    //then Result := NaN
     else begin
         Result := Exp(GammaLn(x) + GammaLn(y) - GammaLn(x+y));
     end;
@@ -1061,57 +1141,20 @@ end;
 
 // riemann zeta function
 
-//function bernoulli_num(n : ComplexType) : ComplexType;
-//var
-//    i, j   : IntegerType;
-//    s1, s2 : ComplexType;
-//begin
-//    s1 := 0;
-//    for i := 0 to trunc(n.Re) do
-//    begin
-//        s2 := 0;
-//        for j := 0 to i do
-//            s2 := s2 + MinusOneTo(j) * Pow(j+1, n) * newton_intt(i,j);
-//        s1 := s1 + Inv(i+1) * s2;
-//    end;
-//    Result := s1;
-//end;
-
-// make it in an array
-//function bernoulli_num(n : ComplexType) : ComplexType;
-//var
-//    i : IntegerType;
-//    s : ComplexType;
-//begin
-//         if (n = 0) then Result := 1
-//    else if (n = 1) then Result := 0.5
-//    else if (n = 2) then Result := 0.1666666666666666666666666666667  // 1/6
-//    else if (n = 4) then Result := -0.0333333333333333333333333333333 // -1/30
-//    else if (n = 6) then Result := 0.02380952380952380952380952380952 // 1/42
-//    else if (n = 8) then Result := -0.0333333333333333333333333333333 // -1/30
-//    else if (n = 10) then Result := 0.0757575757575757575757575757576 // 5/66
-//    else if (isInteger(n) and (fmod(n.Re,2) = 1)) then Result := 0
-//    else begin
-//        s := 0;
-//        for i := 0 to trunc(n.Re)-1 do
-//            s := s + newton_intt(n,i) * bernoulli_num(i) / (n - i + 1);
-//        Result := 1 - s;
-//    end;
-//end;
-
+// compute Bernoulli number B_n - works badly on large ones
 function bernoulli_num(n : IntegerType) : ComplexType;
 var
     i, k : IntegerType;
     s    : ComplexType;
     B    : array of ComplexType;
 begin
-    writeln('ber');
+    //writeln('ber');
     if (n > 10)
         then SetLength(B, n+1)
         else SetLength(B, 10+1);
     B[0] := 1;
     B[1] := 0.5;
-    B[2] := 0.1666666666666666666666666666667;  // 1/6
+    B[2] := 0.16666666666666666666666666666667;  // 1/6
     B[4] := -0.0333333333333333333333333333333; // -1/30
     B[6] := 0.02380952380952380952380952380952; // 1/42
     B[8] := -0.0333333333333333333333333333333; // -1/30
@@ -1131,8 +1174,9 @@ begin
             s := 0.0;
             for k := 0 to i-1 do
                 s := s + 1.0 * B[k] * newton_intt(i,k) / (i - k + 1.0);
+            //B[i] := 1-s;
             B[i] := 1-s;
-            //writeln('b(',i,') = ', AnsiString(B[i]));
+            //writeln(#9, 'b(',i,') = ', AnsiString(B[i]));
             i := i+2;
         end;
     end;
@@ -1144,13 +1188,16 @@ function RiemannZeta(z : ComplexType) : ComplexType;
 var
     limit, n : IntegerType;
     sum      : ComplexType;
+    //limit, n, k : IntegerType;  
+    //sum1, sum2  : ComplexType;
 begin
          if (z = -1) then Result := -1.0/12
     else if (z = 0) then Result := -1.0/2
+    else if (z = 0.5) then Result := -1.460354508809586812889499152515298 // just for convenience
     else if (z = 1) then Result := Infinity
-    else if (z = 2) then Result := 1.644934066848226436472415166646025  // Pi*Pi/6
-    else if (z = 3) then Result := 1.20205690315959428539973816151145   // Apery's constant
-    else if (z = 4) then Result := 1.0823232337111381915160036965411679 // pi^4 / 90
+    else if (z = 2) then Result := C_SQPID6 // Pi*Pi/6
+    else if (z = 3) then Result := C_APERY  // Apery's constant
+    else if (z = 4) then Result := C_QUPI90 // pi^4 / 90
     else if (z.Re > 1) then
     begin
         //if (isInteger(z)) and (fmod(z.Re,2) = 0)
@@ -1170,11 +1217,9 @@ begin
             Result := sum;
         //end;
     end else if (z.Re > 0) and (z.Re < 1) then begin
-        //if (z.Re > 100)
-        //    then limit := 100
-        //    else limit := trunc(1000000/(z.Re*z.Re));
-        limit := 10000;
-        // improve it
+        if (Inv(z.Re).Re > 100)
+                then limit := 100
+                else limit := trunc(1000000*(z.Re*z.Re));
         sum := 0;
         for n := 1 to limit do
             sum := sum + Inv(Pow(n, z)) * MinusOneTo(n+1);
@@ -1183,10 +1228,12 @@ begin
         if (isInteger(z)) 
         then if (fmod(z.Re,2) = 0)
              then Result := 0
-             else Result := MinusOneTo(-z.Re) * bernoulli_num(trunc(1 - z.Re))/(1 - z.Re) // to reinvent B(n)/n
+             else Result := MinusOneTo(-z.Re) * bernoulli_num(trunc(1 - z.Re))/(1 - z.Re) // use B_n
         else Result := NaN; // so far, check functional equation
+        //else Result := Pow(2,z) * Pow(Pi, z-1) * Sin(Pi * z * 0.5) * Gamma(1-z) * RiemannZeta(1-z); // functional equation
     end;
 end;
+
 
 
 
