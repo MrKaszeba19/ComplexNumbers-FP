@@ -113,11 +113,16 @@ function ArCsch(z : ComplexType) : ComplexType;
 function ArSech(z : ComplexType) : ComplexType;
 
 function Sinc(z : ComplexType) : ComplexType;
-function Ei1(z : ComplexType) : ComplexType; // E_1(x) exponential integral
-function SinInt(z : ComplexType) : ComplexType; // Si(x)
-function SinInt2(z : ComplexType) : ComplexType; // si(x)
-function CosInt(z : ComplexType) : ComplexType; // Ci(x)
-function CosInt2(z : ComplexType) : ComplexType; // Cin(x)
+function Tanc(z : ComplexType) : ComplexType;
+function LogInt(z : ComplexType) : ComplexType; // li(z)
+function LogInt2(z : ComplexType) : ComplexType; // Li(z) = li(z) - li(2)
+function ExpIntC1(z : ComplexType) : ComplexType; // E_1(z) exponential integral
+function ExpIntC(z : ComplexType; n : IntegerType) : ComplexType; // E_n(z)
+function ExpInt(z : ComplexType) : ComplexType; // Ei(z)
+function SinInt(z : ComplexType) : ComplexType; // Si(z)
+function SinInt2(z : ComplexType) : ComplexType; // si(z)
+function CosInt(z : ComplexType) : ComplexType; // Ci(z)
+function CosInt2(z : ComplexType) : ComplexType; // Cin(z)
 
 function Gamma(z : ComplexType) : ComplexType;
 function GammaLn(z : ComplexType) : ComplexType;
@@ -131,6 +136,7 @@ function IncBeta(x, a, b : ComplexType) : ComplexType;
 function RegIncBeta(x, a, b : ComplexType) : ComplexType;
 
 function bernoulli_num(n : IntegerType) : ComplexType;
+function Newton(n, k : ComplexType) : ComplexType;
 function RiemannZeta(z : ComplexType) : ComplexType;
 
 implementation
@@ -831,6 +837,13 @@ begin
     else Result := Sin(z)/z;
 end;
 
+function Tanc(z : ComplexType) : ComplexType;
+begin
+    if (z = 0)
+    then Result := 1
+    else Result := Tan(z)/z;
+end;
+
 // gamma function
 
 function fmod(x, y : RealType) : RealType;
@@ -885,25 +898,100 @@ begin
     Result := s;
 end;
 
-function Ei1(z : ComplexType) : ComplexType;
+function LogInt(z : ComplexType) : ComplexType; // li(z)
 var
     sum : ComplexType;
     n   : IntegerType = 50;
 begin
-    sum := z+(n+1)/(n+2);
-    while (n > 0) do
+    if (z = 0) then Result := 0
+    else if (z = 1) then Result := -Infinity
+    else if (isReal(z)) and (z.Re > 1) then
     begin
-        sum := z+n/(1+n/sum);
-        n := n-1;
+        Result := ExpInt(Ln(z));
+    end else begin
+        // TODO check this piece of code, probably does not work
+        sum := (2*n+1)-Ln(z)-Sqr(n+1)/((2*n+3)-Ln(z));
+        while (n > 0) do
+        begin
+            sum := (2*n-1)-Ln(z)-Sqr(n)/sum;
+            n := n-1;
+        end;
+        Result := -z/sum;
     end;
-    Result := Exp(-z)/sum;
 end;
+
+function LogInt2(z : ComplexType) : ComplexType; // Li(z) = li(z) - li(2)
+begin
+    Result := LogInt(z) - LogInt(2); // make the latter one as a constant maybe later
+end;
+
+function ExpIntC1(z : ComplexType) : ComplexType;
+var
+    sum : ComplexType;
+    n   : IntegerType = 50;
+begin
+    if (z = 0) then Result := Infinity
+    else if (isReal(z)) and (z.Re < 0) then Result := NaN
+    else begin
+        sum := z+(n+1)/(n+2);
+        while (n > 0) do
+        begin
+            sum := z+n/(1+n/sum);
+            n := n-1;
+        end;
+        Result := Exp(-z)/sum;
+    end;
+end;
+
+function ExpIntC(z : ComplexType; n : IntegerType) : ComplexType;
+var
+    sum : ComplexType;
+    k   : IntegerType = 50;
+begin
+    if (n = 0)
+    then Result := Exp(-z)/z
+    else if (n = 1) 
+    then Result := ExpIntC1(z)
+    else if (z = 0) 
+    then Result := Inv(n-1)
+    else begin
+        sum := z+(n+k)/(k+2);
+        while (k > 0) do
+        begin
+            sum := z+(n+k-1)/(1+k/sum);
+            k := k-1;
+        end;
+        Result := Exp(-z)/sum;
+    end;
+end;
+
+function ExpInt(z : ComplexType) : ComplexType;
+var 
+    limit, n : IntegerType;
+    sum      : ComplexType;
+begin
+    if (isReal(z)) and (z.Re > 0) 
+    then begin 
+        sum := 0;
+        if (z.Re >= 1000)
+        then limit := trunc(Abs(z)+1)
+        else if (z.Re >= 100)
+        then limit := 2 * trunc(Abs(z)+1)
+        else if (z.Re >= 10)
+        then limit := 5 * trunc(Abs(z)+1)
+        else limit := 10 * trunc(Abs(z)+1);
+        for n := 1 to limit do
+            sum := sum + Inv(n) * powbyfact(z, n);
+        Result := C_EM + Ln(z) + sum;
+    end else Result := -ExpIntC1(-z);
+end;
+
 
 function SinInt(z : ComplexType) : ComplexType; // Si(x)
 begin
     if (z.Re < 0) 
     then Result := -SinInt(-z)
-    else Result := C_HALFPI + Ei1(Imag(z)).Im;
+    else Result := C_HALFPI + ExpIntC1(Imag(z)).Im;
 end;
 
 function SinInt2(z : ComplexType) : ComplexType; // si(x)
@@ -915,7 +1003,7 @@ function CosInt(z : ComplexType) : ComplexType; // Ci(x)
 begin
     if (z.Re < 0) 
     then Result := CosInt(-z) - Imag(C_PI)
-    else Result := -Ei1(Imag(z)).Re;
+    else Result := -ExpIntC1(Imag(z)).Re;
 end;
 
 function CosInt2(z : ComplexType) : ComplexType; // Cin(x)
@@ -1090,6 +1178,27 @@ begin
         for i := 1 to trunc(k.Re) do
             Result := Result * (n - i + 1) / i;
     end;
+end;
+
+function Newton(n, k : ComplexType) : ComplexType;
+var 
+    s : ComplexType;
+    j : IntegerType;
+begin
+	if (n.Re < 0) 
+    then Result := MinusOneTo(k) * Newton(k-n-1, k)
+    else if (isInteger(n)) and (isInteger(k))
+    then Result := newton_intt(n,k)
+	else begin
+        s := 1;
+		j := 1;
+		while (j <= k.Re) do
+		begin
+			s := s * (n-k+j)/j;
+			j := j + 1;
+		end;
+    	Result := s;
+  	end;
 end;
 
 

@@ -20,9 +20,10 @@ I decided to write my own complex numbers mechanism, as FreePascal's built-in me
 - lower and upper incomplete gamma functions
 - erf, erfc, erfi functions
 - beta, incomplete beta, regularized incomplete beta functions
-- E_1 (exponential integral)
+- E_n function (exponential integral) with branches
 - sinc function
 - Si, Ci functions (sine integral, cosine integral)
+- Newton symbol `(z,n)`
 
 ### Partly implemented
 - Riemann's Zeta function (may return wrong values)
@@ -30,10 +31,13 @@ I decided to write my own complex numbers mechanism, as FreePascal's built-in me
 ### Todo list
 - round
 - Lambert's W function with branches
-- Ei function with branches
+- Ei function
 - li (logarithm integral)
-- Newton symbol `(z,n)`
+- inifinities
+- Fresnel integrals
+
 
 ## References
 
 1. [W.H. Press, S.A. Teukolsky, W.T. Vetterling, B.P. Flannery; 'Numerical Recipes. The Art of Scientific Computing. Third Edition'; Cambridge University Press; 2007](http://numerical.recipes/book.html)
+2. [L. Lorentzen, H. Waadeland; 'Continued fractions with applications'; North-Holland Publishing Co.; 1992](https://link.springer.com/content/pdf/bbm:978-94-91216-37-4/1)
