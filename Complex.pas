@@ -144,17 +144,18 @@ implementation
 uses Math, SysUtils;
 
 const 
-    C_PI     = 3.1415926535897932384626433832795;    // pi
-    C_HALFPI = 1.57079632679489661923132169163975;   // pi/2
-    C_QURTPI = 0.7853981633974483096156608458198757; // pi/4
-    C_SQRTPI = 1.7724538509055160272981674833411;    // sqrt(pi)
-    C_2DSQPI = 1.1283791670955125738961589031215;    // 2/sqrt(pi)
-    C_LNSQPI = 0.5723649429247000870717136756765;    // ln(sqrt(pi))
-    C_SQPID6 = 1.644934066848226436472415166646025;  // Pi*Pi/6
-    C_QUPI90 = 1.0823232337111381915160036965411679; // pi^4 / 90
-    C_APERY  = 1.20205690315959428539973816151145;   // Apery's constant
-    C_PHI    = 1.6180339887498948482045868343656;    // phi - Golden ratio
-    C_EM     = 0.5772156649015328606065120900824;    // Euler-Mascheroni constant
+    C_PI     = 3.1415926535897932384626433832795;      // pi
+    C_HALFPI = 1.57079632679489661923132169163975;     // pi/2
+    C_QURTPI = 0.7853981633974483096156608458198757;   // pi/4
+    C_SQRTPI = 1.7724538509055160272981674833411;      // sqrt(pi)
+    C_2DSQPI = 1.1283791670955125738961589031215;      // 2/sqrt(pi)
+    C_LN2    = 0.693147180559945309417232121458176568; // ln(2)
+    C_LNSQPI = 0.5723649429247000870717136756765;      // ln(sqrt(pi))
+    C_SQPID6 = 1.644934066848226436472415166646025;    // Pi*Pi/6
+    C_QUPI90 = 1.0823232337111381915160036965411679;   // pi^4 / 90
+    C_APERY  = 1.20205690315959428539973816151145;     // Apery's constant
+    C_PHI    = 1.6180339887498948482045868343656;      // phi - Golden ratio
+    C_EM     = 0.5772156649015328606065120900824;      // Euler-Mascheroni constant
 
 
 // construction
@@ -910,13 +911,14 @@ begin
         Result := ExpInt(Ln(z));
     end else begin
         // TODO check this piece of code, probably does not work
-        sum := (2*n+1)-Ln(z)-Sqr(n+1)/((2*n+3)-Ln(z));
-        while (n > 0) do
-        begin
-            sum := (2*n-1)-Ln(z)-Sqr(n)/sum;
-            n := n-1;
-        end;
-        Result := -z/sum;
+        Result := ExpInt(Ln(z));
+        //sum := (2*n+1)-Ln(z)-Sqr(n+1)/((2*n+3)-Ln(z));
+        //while (n > 0) do
+        //begin
+        //    sum := (2*n-1)-Ln(z)-Sqr(n)/sum;
+        //    n := n-1;
+        //end;
+        //Result := -z/sum;
     end;
 end;
 
@@ -925,13 +927,14 @@ begin
     Result := LogInt(z) - LogInt(2); // make the latter one as a constant maybe later
 end;
 
-function ExpIntC1(z : ComplexType) : ComplexType;
+function ExpIntC1(z : ComplexType) : ComplexType; // E_1(z) exponential integral
 var
     sum : ComplexType;
-    n   : IntegerType = 50;
+    n   : IntegerType = 100;
 begin
     if (z = 0) then Result := Infinity
-    else if (isReal(z)) and (z.Re < 0) then Result := NaN
+    else if (isReal(z)) and (z.Re < 0) then 
+        Result := -ExpInt(-z.Re) - Imag(Pi)
     else begin
         sum := z+(n+1)/(n+2);
         while (n > 0) do
@@ -970,8 +973,9 @@ var
     limit, n : IntegerType;
     sum      : ComplexType;
 begin
-    if (isReal(z)) and (z.Re > 0) 
-    then begin 
+    if (isReal(z) and (z.Re <= 0))
+    then Result := -ExpIntC1(-z)
+    else begin 
         sum := 0;
         if (z.Re >= 1000)
         then limit := trunc(Abs(z)+1)
@@ -983,27 +987,52 @@ begin
         for n := 1 to limit do
             sum := sum + Inv(n) * powbyfact(z, n);
         Result := C_EM + Ln(z) + sum;
-    end else Result := -ExpIntC1(-z);
+    end;
 end;
 
 
 function SinInt(z : ComplexType) : ComplexType; // Si(x)
+var 
+    limit, n : IntegerType;
+    sum      : ComplexType;
 begin
-    if (z.Re < 0) 
+    if (isZero(z)) then Result := 0
+    else if (z.Re < 0) 
     then Result := -SinInt(-z)
-    else Result := C_HALFPI + ExpIntC1(Imag(z)).Im;
+    else if (isReal(z))
+    then Result := C_HALFPI + ExpIntC1(Imag(z)).Im
+    else begin 
+        //writeln('hello');
+        sum := 0;
+        limit := 100;
+        for n := 0 to limit do
+            sum := sum + MinusOneTo(n) * powbyfact(z, 2*n+1) * Inv(2*n+1);
+        Result := sum;
+    end;
 end;
 
 function SinInt2(z : ComplexType) : ComplexType; // si(x)
 begin
-    Result := SinInt2(z) - C_HALFPI;
+    Result := SinInt(z) - C_HALFPI;
 end;
 
 function CosInt(z : ComplexType) : ComplexType; // Ci(x)
+var 
+    limit, n : IntegerType;
+    sum      : ComplexType;
 begin
-    if (z.Re < 0) 
-    then Result := CosInt(-z) - Imag(C_PI)
-    else Result := -ExpIntC1(Imag(z)).Re;
+    if (isReal(z)) then
+    begin
+        if (z.Re < 0) 
+        then Result := CosInt(-z) + Imag(C_PI)
+        else Result := -ExpIntC1(Imag(z)).Re;
+    end else begin
+        sum := 0;
+        limit := 100;
+        for n := 1 to limit do
+            sum := sum + MinusOneTo(n) * powbyfact(z, 2*n) * Inv(2*n);
+        Result := C_EM + Ln(z) + sum;
+    end;
 end;
 
 function CosInt2(z : ComplexType) : ComplexType; // Cin(x)
@@ -1295,9 +1324,10 @@ end;
 
 function RiemannZeta(z : ComplexType) : ComplexType;
 var
-    limit, n : IntegerType;
+    //limit, n : IntegerType;
     sum      : ComplexType;
-    //limit, n, k : IntegerType;  
+    sum2     : ComplexType;
+    limit, n, k : IntegerType;  
     //sum1, sum2  : ComplexType;
 begin
          if (z = -1) then Result := -1.0/12
@@ -1307,25 +1337,46 @@ begin
     else if (z = 2) then Result := C_SQPID6 // Pi*Pi/6
     else if (z = 3) then Result := C_APERY  // Apery's constant
     else if (z = 4) then Result := C_QUPI90 // pi^4 / 90
+    else if (z = Imag) then Result := ComplexNum(0.003300223685324102874217114210134565971489647240278355024692396, -0.4181554491413216766892742398433610608359501869010386208171983)
+    else if (z = -Imag) then Result := ComplexNum(0.003300223685324102874217114210134565971489647240278355024692396, 0.4181554491413216766892742398433610608359501869010386208171983)
+    //else if (isReal(z)) and (z.Re > 1) then
     else if (z.Re > 1) then
     begin
-        //if (isInteger(z)) and (fmod(z.Re,2) = 0)
-        //then begin
-        //    n := trunc(z.Re) div 2;
-        //    Result := (MinusOneTo(n+1) * bernoulli_num(2*n) * Pow(2*Pi, 2*n))/(2 * fact(2*n));
-        //end else begin
-            //if (z.Re > 50)
-            //    then limit := 1000
-            //    else limit := 10000 + trunc((51.0 - z.Re)/10);
-            if (z.Re > 100)
-                then limit := 100
-                else limit := trunc(1000000/(z.Re*z.Re));
-            sum := 0;
-            for n := 1 to limit do
-                sum := sum + Inv(Pow(n, z));
-            Result := sum;
-        //end;
-    end else if (z.Re > 0) and (z.Re < 1) then begin
+        if (z.Re > 100)
+            then limit := 100
+            else limit := trunc(1000000/(z.Re*z.Re));
+        sum := 0;
+        for n := 1 to limit do
+            sum := sum + Inv(Pow(n, z));
+        Result := sum;
+    end else if (z.Re = 0) then begin
+        limit := 1000000;
+        sum := 0;
+        for n := 1 to limit do
+            sum := sum + Inv(Pow(n, z)) * MinusOneTo(n+1);
+        Result := sum / (1 - Pow(2, 1-z));
+    //end else if (z.Re = 0) then
+    //begin
+    //    //if (z.Re > 10)
+    //    //        then limit := 10
+    //    //        else limit := trunc(100/z.Re);
+    //    writeln('imag at', AnsiString(z));
+    //    limit := 63;
+    //    sum := 0;
+    //    for n := 0 to limit do
+    //    begin
+    //        sum2 := 0;
+    //        for k := 0 to n do
+    //        begin
+    //            sum2 := sum2 + newton_intt(n,k) * MinusOneTo(k) * Pow(k+1, -z+1);
+    //        end;
+    //        sum := sum + Inv(n+1) * sum2;
+    //    end;
+    //    sum := Inv(z-1) * sum;
+    //    Result := sum;   
+    //end else if (z.Re > 0) and (z.Re < 1) then begin
+    end else if (z.Re >= 0.5) and (z.Re < 1) then begin
+        // repair this non-absolute convergence
         if (Inv(z.Re).Re > 100)
                 then limit := 100
                 else limit := trunc(1000000*(z.Re*z.Re));
@@ -1338,8 +1389,10 @@ begin
         then if (fmod(z.Re,2) = 0)
              then Result := 0
              else Result := MinusOneTo(-z.Re) * bernoulli_num(trunc(1 - z.Re))/(1 - z.Re) // use B_n
-        else Result := NaN; // so far, check functional equation
-        //else Result := Pow(2,z) * Pow(Pi, z-1) * Sin(Pi * z * 0.5) * Gamma(1-z) * RiemannZeta(1-z); // functional equation
+        else begin
+            writeln('hello ', AnsiString(z), ' to ', AnsiString(1-z));
+            Result := Pow(2,z) * Pow(Pi, z-1) * Sin(Pi * z * 0.5) * Gamma(1-z) * RiemannZeta(1-z); // functional equation
+        end;
     end;
 end;
 
