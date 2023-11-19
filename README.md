@@ -21,6 +21,8 @@ I decided to write my own complex numbers mechanism, as FreePascal's built-in me
 - erf, erfc, erfi functions
 - beta, incomplete beta, regularized incomplete beta functions
 - E_n function (exponential integral) with branches
+- Ei function
+- li (logarithm integral)
 - sinc function
 - Si, Ci functions (sine integral, cosine integral)
 - Newton symbol `(z,n)`
@@ -31,8 +33,6 @@ I decided to write my own complex numbers mechanism, as FreePascal's built-in me
 ### Todo list
 - round
 - Lambert's W function with branches
-- Ei function
-- li (logarithm integral)
 - inifinities
 - Fresnel integrals
 
