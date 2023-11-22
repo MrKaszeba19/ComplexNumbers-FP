@@ -1346,10 +1346,6 @@ begin
         begin
             n := trunc(1 - z.Re);
             Result := (Pow(2, n) - 1) * bernoulli_num(n) / n;
-        //end else if (isInteger(z)) and (z.Re > 0) and (trunc(z.Re) mod 2 = 0) then
-        //begin
-        //    n := trunc(z.Re);
-        //    Result := MinusOneTo(n div 2 + 1) * bernoulli_num(n) * powbyfact(C_PI, n) * (Pow(2, n-1) - 1);
         end else begin
             n := 50;
             dn := 0;
@@ -1394,66 +1390,6 @@ begin
     else begin
         Result := DirichletEta(z) * Inv(1-Pow(2,1-z));
     end;
-    //else if (isReal(z)) and (z.Re > 1) then
-    {*
-    else if (z.Re > 1) then
-    begin
-        if (z.Re > 100)
-            then limit := 100
-            else limit := trunc(1000000/(z.Re*z.Re));
-        sum := 0;
-        for n := 1 to limit do
-            sum := sum + Inv(Pow(n, z));
-        Result := sum;
-    //end else if (z.Re = 0) or (z.Re = 1) then begin
-    end else if (z.Re = 1) then begin
-        limit := 1000000;
-        sum := 0;
-        for n := 1 to limit do
-            sum := sum + Inv(Pow(2*n-1, z)) - Inv(Pow(2*n, z));
-        Result := sum / (1 - Pow(2, 1-z));
-    //end else if (z.Re = 0) then
-    //begin
-    //    //if (z.Re > 10)
-    //    //        then limit := 10
-    //    //        else limit := trunc(100/z.Re);
-    //    writeln('imag at', AnsiString(z));
-    //    limit := 63;
-    //    sum := 0;
-    //    for n := 0 to limit do
-    //    begin
-    //        sum2 := 0;
-    //        for k := 0 to n do
-    //        begin
-    //            sum2 := sum2 + newton_intt(n,k) * MinusOneTo(k) * Pow(k+1, -z+1);
-    //        end;
-    //        sum := sum + Inv(n+1) * sum2;
-    //    end;
-    //    sum := Inv(z-1) * sum;
-    //    Result := sum;   
-    //end else if (z.Re > 0) and (z.Re < 1) then begin
-    end else if (z.Re >= 0.5) and (z.Re < 1) then begin
-    //end else if (z.Re > 0) and (z.Re <= 0.5) then begin
-        // repair this non-absolute convergence
-        if (Inv(z.Re).Re > 100)
-                then limit := 100
-                else limit := trunc(1000000*(z.Re*z.Re));
-        sum := 0;
-        for n := 1 to limit do
-            //sum := sum + Inv(Pow(n, z)) * MinusOneTo(n+1);
-            sum := sum + Inv(Pow(2*n-1, z)) - Inv(Pow(2*n, z));
-        Result := sum / (1 - Pow(2, 1-z));
-    end else begin
-        if (isInteger(z)) 
-        then if (fmod(z.Re,2) = 0)
-             then Result := 0
-             else Result := MinusOneTo(-z.Re) * bernoulli_num(trunc(1 - z.Re))/(1 - z.Re) // use B_n
-        else begin
-            //writeln('hello ', AnsiString(z), ' to ', AnsiString(1-z));
-            Result := Pow(2,z) * Pow(Pi, z-1) * Sin(Pi * z * 0.5) * Gamma(1-z) * RiemannZeta(1-z); // functional equation
-        end;
-    end;
-    *}
 end;
 
 

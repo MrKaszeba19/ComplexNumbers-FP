@@ -26,16 +26,15 @@ I decided to write my own complex numbers mechanism, as FreePascal's built-in me
 - sinc function
 - Si, Ci functions (sine integral, cosine integral)
 - Newton symbol `(z,n)`
-
-### Partly implemented
-- Riemann's Zeta function (may return wrong values)
+- Dirichlet eta function
+- Riemann's zeta function
 
 ### Todo list
 - round
 - Lambert's W function with branches
 - inifinities
 - Fresnel integrals
-- Dirichlet eta function
+
 
 
 ## References
