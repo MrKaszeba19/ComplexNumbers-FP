@@ -35,6 +35,7 @@ I decided to write my own complex numbers mechanism, as FreePascal's built-in me
 - Lambert's W function with branches
 - inifinities
 - Fresnel integrals
+- Dirichlet eta function
 
 
 ## References

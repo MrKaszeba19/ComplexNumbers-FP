@@ -137,6 +137,7 @@ function RegIncBeta(x, a, b : ComplexType) : ComplexType;
 
 function bernoulli_num(n : IntegerType) : ComplexType;
 function Newton(n, k : ComplexType) : ComplexType;
+function DirichletEta(z : ComplexType) : ComplexType;
 function RiemannZeta(z : ComplexType) : ComplexType;
 
 implementation
@@ -144,18 +145,21 @@ implementation
 uses Math, SysUtils;
 
 const 
-    C_PI     = 3.1415926535897932384626433832795;      // pi
-    C_HALFPI = 1.57079632679489661923132169163975;     // pi/2
-    C_QURTPI = 0.7853981633974483096156608458198757;   // pi/4
-    C_SQRTPI = 1.7724538509055160272981674833411;      // sqrt(pi)
-    C_2DSQPI = 1.1283791670955125738961589031215;      // 2/sqrt(pi)
-    C_LN2    = 0.693147180559945309417232121458176568; // ln(2)
-    C_LNSQPI = 0.5723649429247000870717136756765;      // ln(sqrt(pi))
-    C_SQPID6 = 1.644934066848226436472415166646025;    // Pi*Pi/6
-    C_QUPI90 = 1.0823232337111381915160036965411679;   // pi^4 / 90
-    C_APERY  = 1.20205690315959428539973816151145;     // Apery's constant
-    C_PHI    = 1.6180339887498948482045868343656;      // phi - Golden ratio
-    C_EM     = 0.5772156649015328606065120900824;      // Euler-Mascheroni constant
+    C_PI       = 3.1415926535897932384626433832795;       // pi
+    C_HALFPI   = 1.57079632679489661923132169163975;      // pi/2
+    C_QURTPI   = 0.7853981633974483096156608458198757;    // pi/4
+    C_SQRTPI   = 1.7724538509055160272981674833411;       // sqrt(pi)
+    C_2DSQPI   = 1.1283791670955125738961589031215;       // 2/sqrt(pi)
+    C_LN2      = 0.693147180559945309417232121458176568;  // ln(2)
+    C_LNSQPI   = 0.5723649429247000870717136756765;       // ln(sqrt(pi))
+    C_MINV12   = -0.08333333333333333333333333333333333;  // -1/12
+    C_SQPID6   = 1.644934066848226436472415166646025;     // Pi*Pi/6
+    C_SQPID12  = 0.822467033424113218236207583323012594;  // Pi*Pi/12
+    C_QUPI90   = 1.0823232337111381915160036965411679;    // pi^4 / 90
+    C_7QUPI720 = 0.9470328294972459175765032344735219149; // 7pi^4 / 720
+    C_APERY    = 1.20205690315959428539973816151145;      // Apery's constant
+    C_PHI      = 1.6180339887498948482045868343656;       // phi - Golden ratio
+    C_EM       = 0.5772156649015328606065120900824;       // Euler-Mascheroni constant
 
 
 // construction
@@ -1322,6 +1326,54 @@ begin
     Result := B[n];
 end;
 
+function DirichletEta(z : ComplexType) : ComplexType;
+var
+    i, n, k : IntegerType;
+    d, dn, s : ComplexType;
+begin
+         if (z = -1) then Result := 1.0/4
+    else if (z = 0) then Result := 1.0/2
+    else if (z = 0.5) then Result := 0.6048986434216303702472659142359555 // just for convenience
+    else if (z = 1) then Result := C_LN2
+    else if (z = 2) then Result := C_SQPID12
+    else if (z = 3) then Result := 0.901542677369695714049803621133587493  
+    else if (z = 4) then Result := C_7QUPI720
+    else if (z = Infinity) then Result := 1
+    else if (z = Imag) then Result := ComplexNum(0.532593181763096166570965008197319044727785768143492192239748725, 0.229384857728525892457886733558081938225195415266121034625072393)
+    else if (z = -Imag) then Result := ComplexNum(0.532593181763096166570965008197319044727785768143492192239748725, -0.229384857728525892457886733558081938225195415266121034625072393)
+    else begin
+        if (isInteger(z)) and (z.Re < 0) then
+        begin
+            n := trunc(1 - z.Re);
+            Result := (Pow(2, n) - 1) * bernoulli_num(n) / n;
+        //end else if (isInteger(z)) and (z.Re > 0) and (trunc(z.Re) mod 2 = 0) then
+        //begin
+        //    n := trunc(z.Re);
+        //    Result := MinusOneTo(n div 2 + 1) * bernoulli_num(n) * powbyfact(C_PI, n) * (Pow(2, n-1) - 1);
+        end else begin
+            n := 50;
+            dn := 0;
+            for i := 0 to n do
+                dn := dn + fact(n+i-1)*Pow(4,i)/(fact(n-i) * fact(2*i));
+            dn := n * dn;
+            s := 0;
+            for k := 0 to n-1 do
+            begin
+                d := 0;
+                for i := 0 to k do
+                    d := d + fact(n+i-1)*Pow(4,i)/(fact(n-i) * fact(2*i));
+                d := n * d;
+                s := s + MinusOneTo(k) * (d - dn) * Inv(Pow(k+1, z))
+            end;
+            s := -1/dn * s;
+            Result := s;
+        end;
+    end;
+end;
+
+
+// TODO
+// try Dirichlet eta function
 function RiemannZeta(z : ComplexType) : ComplexType;
 var
     //limit, n : IntegerType;
@@ -1330,7 +1382,7 @@ var
     limit, n, k : IntegerType;  
     //sum1, sum2  : ComplexType;
 begin
-         if (z = -1) then Result := -1.0/12
+         if (z = -1) then Result := -1/12
     else if (z = 0) then Result := -1.0/2
     else if (z = 0.5) then Result := -1.460354508809586812889499152515298 // just for convenience
     else if (z = 1) then Result := Infinity
@@ -1339,7 +1391,11 @@ begin
     else if (z = 4) then Result := C_QUPI90 // pi^4 / 90
     else if (z = Imag) then Result := ComplexNum(0.003300223685324102874217114210134565971489647240278355024692396, -0.4181554491413216766892742398433610608359501869010386208171983)
     else if (z = -Imag) then Result := ComplexNum(0.003300223685324102874217114210134565971489647240278355024692396, 0.4181554491413216766892742398433610608359501869010386208171983)
+    else begin
+        Result := DirichletEta(z) * Inv(1-Pow(2,1-z));
+    end;
     //else if (isReal(z)) and (z.Re > 1) then
+    {*
     else if (z.Re > 1) then
     begin
         if (z.Re > 100)
@@ -1349,11 +1405,12 @@ begin
         for n := 1 to limit do
             sum := sum + Inv(Pow(n, z));
         Result := sum;
-    end else if (z.Re = 0) then begin
+    //end else if (z.Re = 0) or (z.Re = 1) then begin
+    end else if (z.Re = 1) then begin
         limit := 1000000;
         sum := 0;
         for n := 1 to limit do
-            sum := sum + Inv(Pow(n, z)) * MinusOneTo(n+1);
+            sum := sum + Inv(Pow(2*n-1, z)) - Inv(Pow(2*n, z));
         Result := sum / (1 - Pow(2, 1-z));
     //end else if (z.Re = 0) then
     //begin
@@ -1376,13 +1433,15 @@ begin
     //    Result := sum;   
     //end else if (z.Re > 0) and (z.Re < 1) then begin
     end else if (z.Re >= 0.5) and (z.Re < 1) then begin
+    //end else if (z.Re > 0) and (z.Re <= 0.5) then begin
         // repair this non-absolute convergence
         if (Inv(z.Re).Re > 100)
                 then limit := 100
                 else limit := trunc(1000000*(z.Re*z.Re));
         sum := 0;
         for n := 1 to limit do
-            sum := sum + Inv(Pow(n, z)) * MinusOneTo(n+1);
+            //sum := sum + Inv(Pow(n, z)) * MinusOneTo(n+1);
+            sum := sum + Inv(Pow(2*n-1, z)) - Inv(Pow(2*n, z));
         Result := sum / (1 - Pow(2, 1-z));
     end else begin
         if (isInteger(z)) 
@@ -1390,10 +1449,11 @@ begin
              then Result := 0
              else Result := MinusOneTo(-z.Re) * bernoulli_num(trunc(1 - z.Re))/(1 - z.Re) // use B_n
         else begin
-            writeln('hello ', AnsiString(z), ' to ', AnsiString(1-z));
+            //writeln('hello ', AnsiString(z), ' to ', AnsiString(1-z));
             Result := Pow(2,z) * Pow(Pi, z-1) * Sin(Pi * z * 0.5) * Gamma(1-z) * RiemannZeta(1-z); // functional equation
         end;
     end;
+    *}
 end;
 
 
