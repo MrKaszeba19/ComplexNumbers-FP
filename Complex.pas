@@ -996,9 +996,9 @@ begin
 end;
 
 function LogInt(z : ComplexType) : ComplexType; // li(z)
-var
-    sum : ComplexType;
-    n   : IntegerType = 50;
+//var
+//    sum : ComplexType;
+//    n   : IntegerType = 50;
 begin
     if (z = 0) then Result := 0
     else if (z = 1) then Result := -Infinity
@@ -1006,7 +1006,7 @@ begin
     begin
         Result := ExpInt(Ln(z));
     end else begin
-        // TODO check this piece of code, probably does not work
+        // TODO check this piece of code
         Result := ExpInt(Ln(z));
         //sum := (2*n+1)-Ln(z)-Sqr(n+1)/((2*n+3)-Ln(z));
         //while (n > 0) do
@@ -1503,16 +1503,7 @@ begin
     end;
 end;
 
-
-// TODO
-// try Dirichlet eta function
 function RiemannZeta(z : ComplexType) : ComplexType;
-var
-    //limit, n : IntegerType;
-    sum      : ComplexType;
-    sum2     : ComplexType;
-    limit, n, k : IntegerType;  
-    //sum1, sum2  : ComplexType;
 begin
          if (z = -1) then Result := -1/12
     else if (z = 0) then Result := -1.0/2
