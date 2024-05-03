@@ -35,7 +35,11 @@ I decided to write my own complex numbers mechanism, as FreePascal's built-in me
 - inifinities
 - Fresnel integrals
 
+## Issues
 
+So far I haven't encountered any issues. The complex type substitutes `Extended` type almost plug and play,
+except for inequalities (for mathematical reasons one can't set any linear order for complex numbers) 
+and putting them into `write`/`writeln` - they must be cast with `AnsiString()`.
 
 ## References
 
