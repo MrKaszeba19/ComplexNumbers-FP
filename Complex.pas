@@ -78,6 +78,7 @@ function Pow4(z : ComplexType) : ComplexType;
 function Pow5(z : ComplexType) : ComplexType;
 function Inv(z : ComplexType) : ComplexType;
 function Exp(z : ComplexType) : ComplexType;
+function ExpImag(z : ComplexType) : ComplexType;
 function Ln(z : ComplexType) : ComplexType;
 function Log(a,b : ComplexType) : ComplexType;
 function IntPow(x : ComplexType; y : IntegerType) : ComplexType;
@@ -144,6 +145,10 @@ function Newton(n, k : ComplexType) : ComplexType;
 function DirichletEta(z : ComplexType) : ComplexType;
 function RiemannZeta(z : ComplexType) : ComplexType;
 
+function LambertW0(z : ComplexType) : ComplexType;
+
+function InfPowerTower(z : ComplexType) : ComplexType;
+
 implementation
 
 uses Math, SysUtils;
@@ -166,6 +171,7 @@ const
     C_PHI      = 1.6180339887498948482045868343656;       // phi - Golden ratio
     C_EM       = 0.5772156649015328606065120900824;       // Euler-Mascheroni constant
     C_OMEGA    = 0.56714329040978387299996866221035554;   // Omega constant
+    C_EXPTOXP1 = 41.193555674716123563188287684364331978; // e^(e+1)
 
 
 // construction
@@ -610,6 +616,11 @@ begin
     if (z.Im = 0) 
         then Result := system.exp(z.Re)
         else Result := system.exp(z.Re)*(system.cos(z.Im) + Imag(system.sin(z.Im)));
+end;
+
+function ExpImag(z : ComplexType) : ComplexType;
+begin
+    Result := system.Cos(z.Im) + Imag(system.sin(z.Im));    
 end;
 
 function Ln(z : ComplexType) : ComplexType;
@@ -1519,7 +1530,143 @@ begin
     end;
 end;
 
+// lambert lambert ty k
+// W function
+
+function LambertW0_iter(z : ComplexType) : ComplexType;
+var
+    sum : ComplexType;
+    n   : IntegerType = 9;
+    A   : array[0..9,0..1] of IntegerType;
+    //n   : IntegerType = 9;
+    //A   : array[0..10,0..1] of ComplexType;
+begin
+    A[0][0] := 1; A[0][1] := 1;
+    A[1][0] := 1; A[1][1] := 1;
+    A[2][0] := 1; A[2][1] := 2;
+    A[3][0] := 5; A[3][1] := 3;
+    A[4][0] := 17; A[4][1] := 10;
+    A[5][0] := 133; A[5][1] := 17;
+    A[6][0] := 1927; A[6][1] := 190;
+    A[7][0] := 13582711; A[7][1] := 94423;
+    A[8][0] := 92612482895; A[8][1] := 1597966;
+    A[9][0] := 10402118970990527; A[9][1] := 8773814169;
+    //A[10][0] := 59203666396198716260449; A[10][1] := 10796179523602;
+    sum := A[n][0] * z / A[n][1];
+    while (n > 0) do
+    begin
+        n := n-1;
+        sum := (A[n][0]*z)/(A[n][1]+sum);
+    end;
+    Result := sum;
+end;
+
+function LambertW0_exp(z : ComplexType) : ComplexType;
+var
+    sum : ComplexType;
+    n   : IntegerType = 100;
+begin
+    sum := z/Exp(z);
+    while (n >= 0) do
+    begin
+        sum := z/Exp(sum);
+        n := n-1;
+    end;
+    Result := sum;
+end;
+
+function LambertW0_ln(z : ComplexType) : ComplexType;
+var
+    sum : ComplexType;
+    n   : IntegerType = 100;
+begin
+    sum := Ln(z);
+    while (n >= 0) do
+    begin
+        sum := Ln(z/sum);
+        n := n-1;
+    end;
+    Result := sum;
+end;
 
 
+function xex(x : RealType) : RealType;
+begin
+    Result := x * system.exp(x);
+end;
+
+// approx for reals between e and e^(1+e)
+function LambertW0_realapprox(z : RealType) : RealType;
+var
+    res, dif : RealType;
+    res0     : RealType = 0;
+    epsilon  : RealType = 0.000000000000001;
+    n        : IntegerType = 1000;
+    a, b     : RealType;
+begin
+    a := 1;
+    b := C_EXP;
+    dif := 2137;
+    res := 1;
+    while (n > 0) 
+    and (dif >= epsilon) 
+    do
+    begin
+        if (xex(a) = z) then
+        begin
+            res := a;
+            dif := 0;
+        end else if (xex(b) = z) then
+        begin
+            res := b;
+            dif := 0;
+        end else begin
+            res := (a+b)/2;
+            //writeln(res, #9, xex(res));
+            if (xex(res) = z) then
+            begin
+                dif := 0;
+            end else if (xex(res) > z) then
+            begin
+                //writeln('less');
+                b := res;
+                dif := system.abs(res - res0);
+                res0 := res;
+            end else begin
+                a := res;
+                dif := system.abs(res - res0);
+                res0 := res;
+            end;
+        end;
+        n := n-1;
+    end;
+    //write(n, #9);
+    Result := res;
+end;
+
+function LambertW0(z : ComplexType) : ComplexType;
+begin
+         if (z = 0) then Result := 0
+    else if (z = 1) then Result := C_OMEGA
+    else if (z = C_EXP) then Result := 1
+    else if (z = Exp(1+C_EXP)) then Result := C_EXP
+    else if (z = Sqrt(C_EXP)/2) then Result := 0.5
+    else if (z = 2*C_LN2) then Result := C_LN2
+    else if (z = -Inv(C_EXP)) then Result := -1
+    else if (z = -C_HALFPI) then Result := Imag(C_HALFPI)
+    else if (Abs(z) > C_EXPTOXP1) then Result := LambertW0_ln(z)
+    //else if ((isReal(z)) and (z.Re < C_EXP) and (z.Re > -Inv(C_EXP).Re)) then Result := LambertW0_exp(z)
+    else if ((not ((isReal(z)) and (z.Re <= Inv(C_EXP).Re))) 
+        and (Abs(z) < C_EXP) 
+        and (Abs(z) > Inv(C_EXP).Re)) then Result := LambertW0_exp(z)
+    else if ((isReal(z)) and (z.Re > C_EXP) and (z.Re < C_EXPTOXP1)) then Result := LambertW0_realapprox(z.Re)
+    else Result := LambertW0_iter(z);
+end;
+
+// Eisenstein (1844)
+function InfPowerTower(z : ComplexType) : ComplexType;
+begin
+    Result := LambertW0(-Ln(z))/Ln(z);
+end;
 
 end.

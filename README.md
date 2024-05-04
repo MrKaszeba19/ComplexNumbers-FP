@@ -28,6 +28,8 @@ I decided to write my own complex numbers mechanism, as FreePascal's built-in me
 - Newton symbol `(z,n)`
 - Dirichlet eta function
 - Riemann's zeta function
+- Bernoulli numbers
+- Lambert's W function main branch
 
 ### Todo list
 - round
@@ -37,9 +39,11 @@ I decided to write my own complex numbers mechanism, as FreePascal's built-in me
 
 ## Issues
 
-So far I haven't encountered any issues. The complex type substitutes `Extended` type almost plug and play,
-except for inequalities (for mathematical reasons one can't set any linear order for complex numbers) 
-and putting them into `write`/`writeln` - they must be cast with `AnsiString()`.
+- The complex type substitutes `Extended` type almost plug and play, except for:
+  * inequalities (for mathematical reasons one can't set any linear order for complex numbers) 
+  * putting them into `write`/`writeln` - they must be cast with `AnsiString()`.
+- Bernoulli numbers generation may produce wrong results at `n >= 40`.
+- Lambert W's function main branch may produce inaccurate values when `Im(z) ≠ 0` and `e ≤ |z| ≤ e^(1+e)`.
 
 ## References
 
