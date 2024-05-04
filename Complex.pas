@@ -1596,16 +1596,13 @@ begin
 end;
 
 // approx for reals between e and e^(1+e)
-function LambertW0_realapprox(z : RealType) : RealType;
+function LambertW0_realapprox(z, a, b : RealType) : RealType;
 var
     res, dif : RealType;
     res0     : RealType = 0;
     epsilon  : RealType = 0.000000000000001;
     n        : IntegerType = 1000;
-    a, b     : RealType;
 begin
-    a := 1;
-    b := C_EXP;
     dif := 2137;
     res := 1;
     while (n > 0) 
@@ -1622,13 +1619,11 @@ begin
             dif := 0;
         end else begin
             res := (a+b)/2;
-            //writeln(res, #9, xex(res));
             if (xex(res) = z) then
             begin
                 dif := 0;
             end else if (xex(res) > z) then
             begin
-                //writeln('less');
                 b := res;
                 dif := system.abs(res - res0);
                 res0 := res;
@@ -1640,7 +1635,6 @@ begin
         end;
         n := n-1;
     end;
-    //write(n, #9);
     Result := res;
 end;
 
@@ -1655,11 +1649,11 @@ begin
     else if (z = -Inv(C_EXP)) then Result := -1
     else if (z = -C_HALFPI) then Result := Imag(C_HALFPI)
     else if (Abs(z) > C_EXPTOXP1) then Result := LambertW0_ln(z)
-    //else if ((isReal(z)) and (z.Re < C_EXP) and (z.Re > -Inv(C_EXP).Re)) then Result := LambertW0_exp(z)
-    else if ((not ((isReal(z)) and (z.Re <= Inv(C_EXP).Re))) 
+    else if (
+        (not ((isReal(z)) and (z.Re <= -Inv(C_EXP).Re))) 
         and (Abs(z) < C_EXP) 
-        and (Abs(z) > Inv(C_EXP).Re)) then Result := LambertW0_exp(z)
-    else if ((isReal(z)) and (z.Re > C_EXP) and (z.Re < C_EXPTOXP1)) then Result := LambertW0_realapprox(z.Re)
+        ) then Result := LambertW0_exp(z)
+    else if ((isReal(z)) and (z.Re > C_EXP) and (z.Re < C_EXPTOXP1)) then Result := LambertW0_realapprox(z.Re, 1, C_EXP)
     else Result := LambertW0_iter(z);
 end;
 
