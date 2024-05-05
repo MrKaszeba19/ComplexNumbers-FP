@@ -146,6 +146,7 @@ function DirichletEta(z : ComplexType) : ComplexType;
 function RiemannZeta(z : ComplexType) : ComplexType;
 
 function LambertW0(z : ComplexType) : ComplexType;
+function LambertWn1(z : ComplexType) : ComplexType;
 
 function InfPowerTower(z : ComplexType) : ComplexType;
 
@@ -1595,6 +1596,11 @@ begin
     Result := x * system.exp(x);
 end;
 
+function xex(x : ComplexType) : ComplexType;
+begin
+    Result := x * Exp(x);
+end;
+
 // approx for reals between e and e^(1+e)
 function LambertW0_realapprox(z, a, b : RealType) : RealType;
 var
@@ -1638,6 +1644,69 @@ begin
     Result := res;
 end;
 
+// approximation for complex numbers
+function LambertW0_newton1(z : ComplexType) : ComplexType;
+var
+    w0      : ComplexType;
+    n       : IntegerType = 10000;
+    //delta   : RealType = 2137;
+    epsilon : RealType = 0.000000000000001;
+begin
+    w0 := Ln(z);
+    while (n > 0) and (Abs(xex(w0) - z) > epsilon) do
+    begin
+        w0 := w0 - (xex(w0) - z)/(Exp(w0)*(w0+1) - ((w0+2)*(xex(w0)-z))/(2*w0+2));
+        n := n - 1;
+    end;
+    Result := w0;
+end;
+
+function LambertW0_newton2(z : RealType) : RealType;
+const
+    limit = 10;
+var
+    w0      : RealType;
+    n       : IntegerType = 0;
+    //delta   : RealType = 2137;
+    epsilon : RealType = 0.000000000000001;
+begin
+    //w0 := system.ln(z);
+    w0 := system.ln(z) - system.ln(system.ln(z));
+    while (n < limit) and (system.abs(xex(w0) - z) > epsilon) do
+    begin
+        w0 := (w0)/(1+w0) * (1 + system.ln(z/w0));
+        n := n + 1;
+    end;
+    if (n = limit)
+        then Result := w0
+        else Result := LambertW0_realapprox(z, 1, C_EXP);
+end;
+
+function LambertWn1_realnewton(z : RealType) : RealType;
+const
+    limit = 10000;
+var
+    w0      : RealType;
+    n       : IntegerType = 0;
+    //delta   : RealType = 2137;
+    epsilon : RealType = 0.000000000000001;
+begin
+    //w0 := system.ln(z);
+    if (z <= -0.25) 
+        then w0 := -1 - system.sqrt(2)*system.sqrt(1 + C_EXP*z)
+        else w0 := system.ln(-z) - system.ln(-system.ln(-z));
+    while (n < limit) and (system.abs(xex(w0) - z) > epsilon) do
+    begin
+        w0 := (w0)/(1+w0) * (1 + system.ln(z/w0));
+        n := n + 1;
+    end;
+    //write(n, #9);
+    Result := w0;
+    //if (n = limit)
+    //    then Result := w0
+    //    else Result := LambertW0_realapprox(z, 1, C_EXP);
+end;
+
 function LambertW0(z : ComplexType) : ComplexType;
 begin
          if (z = 0) then Result := 0
@@ -1653,8 +1722,21 @@ begin
         (not ((isReal(z)) and (z.Re <= -Inv(C_EXP).Re))) 
         and (Abs(z) < C_EXP) 
         ) then Result := LambertW0_exp(z)
-    else if ((isReal(z)) and (z.Re > C_EXP) and (z.Re < C_EXPTOXP1)) then Result := LambertW0_realapprox(z.Re, 1, C_EXP)
-    else Result := LambertW0_iter(z);
+    //else if ((isReal(z)) and (z.Re > C_EXP) and (z.Re < C_EXPTOXP1)) then Result := LambertW0_realapprox(z.Re, 1, C_EXP)
+    //else Result := LambertW0_iter(z);
+    else if ((isReal(z)) and (z.Re > C_EXP) and (z.Re < C_EXPTOXP1)) then Result := LambertW0_newton2(z.Re)
+    else Result := LambertW0_newton1(z);
+end;
+
+function LambertWn1(z : ComplexType) : ComplexType;
+begin
+         if (z = -Inv(C_EXP)) then Result := -1
+    else if (isReal(z)) and (z.Re > -Inv(C_EXP).Re) and (z.Re < 0) then
+    begin
+        Result := LambertWn1_realnewton(z.Re)
+    end else begin
+        Result := 0;
+    end;
 end;
 
 // Eisenstein (1844)

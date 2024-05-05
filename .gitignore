@@ -3,3 +3,4 @@
 *.ppu
 trash/
 examples/test?
+.DS_Store

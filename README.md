@@ -43,10 +43,11 @@ I decided to write my own complex numbers mechanism, as FreePascal's built-in me
   * inequalities (for mathematical reasons one can't set any linear order for complex numbers) 
   * putting them into `write`/`writeln` - they must be cast with `AnsiString()`.
 - Bernoulli numbers generation may produce wrong results at `n >= 40`.
-- Lambert W's function main branch may produce inaccurate values when `Im(z) ≠ 0` and `e ≤ |z| ≤ e^(1+e)`.
+- Lambert W's function `k = -1` branch works only if `x ∈ (-1/e, 0)`.
 
 ## References
 
 1. [W.H. Press, S.A. Teukolsky, W.T. Vetterling, B.P. Flannery; 'Numerical Recipes. The Art of Scientific Computing. Third Edition'; Cambridge University Press (2007)](http://numerical.recipes/book.html)
 2. [L. Lorentzen, H. Waadeland; 'Continued fractions with applications'; North-Holland Publishing Co. (1992)](https://link.springer.com/content/pdf/bbm:978-94-91216-37-4/1)
 3. [D. Harvey; 'A multimodular algorithm for computing Bernoulli numbers'; Math. Comput., 79 (272): 2361–2370 (2010)](https://www.ams.org/journals/mcom/2010-79-272/S0025-5718-2010-02367-1/)
+4. [L. Lóczi; 'Guaranteed- and high-precision evaluation of the Lambert W function'. Appl. Math. Comput., 433: 127406 (2022)](https://www.sciencedirect.com/science/article/pii/S0096300322004805?via%3Dihub)

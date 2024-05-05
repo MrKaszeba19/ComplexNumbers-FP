@@ -16,9 +16,21 @@ begin
     writeln('e', #9, AnsiString(LambertW0(EulerNum())));
     writeln('42', #9, AnsiString(LambertW0(42)));
     writeln('42+i', #9, AnsiString(LambertW0(42+Imag(1))));  
-    writeln('3+4i', #9, AnsiString(LambertW0(3+Imag(4))));   // inaccurate
-    writeln('-3+4i', #9, AnsiString(LambertW0(-3+Imag(4)))); // inaccurate
-    writeln('10+10i', #9, AnsiString(LambertW0(10+Imag(10)))); // inaccurate
+    writeln('3+4i', #9, AnsiString(LambertW0(3+Imag(4))));
+    writeln('-3+4i', #9, AnsiString(LambertW0(-3+Imag(4))));
+    writeln('10+10i', #9, AnsiString(LambertW0(10+Imag(10))));
     writeln('-0.25+0.25i', #9, AnsiString(LambertW0(-0.25+Imag(0.25))));
     writeln('100-100i', #9, AnsiString(LambertW0(100-Imag(100))));
+    writeln('-0.5', #9, AnsiString(LambertW0(-0.5)));
+    writeln('-1', #9, AnsiString(LambertW0(-1)));
+
+    writeln();
+    writeln('lambert W_-1');
+    s := -0.5;
+    while s <= 0.5 do
+    begin
+        write(s:2:6, #9);
+        writeln(AnsiString(LambertWn1(s)));
+        s := s + 0.015625;
+    end;
 end.
