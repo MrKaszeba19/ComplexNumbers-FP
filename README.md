@@ -30,6 +30,7 @@ I decided to write my own complex numbers mechanism, as FreePascal's built-in me
 - Riemann's zeta function
 - Bernoulli numbers
 - Lambert's W function with all integer branches
+- Infinite power tower `h(z) = z^z^z^...`
 
 ### Todo list
 - round

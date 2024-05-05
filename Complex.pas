@@ -529,17 +529,20 @@ end;
 
 function Pi() : RealType;
 begin
-    Result := 3.1415926535897932384626433832795;
+    //Result := 3.1415926535897932384626433832795;
+    Result := C_PI;
 end;
 
 function GoldenNum() : RealType;
 begin
-    Result := 1.6180339887498948482045868343656;
+    //Result := 1.6180339887498948482045868343656;
+    Result := C_PHI;
 end;
 
 function EulerMascheroni() : RealType;
 begin
-    Result := 0.5772156649015328606065120900824;
+    //Result := 0.5772156649015328606065120900824;
+    Result := C_EM;
 end;
 
 function Sqr(z : ComplexType) : ComplexType;
@@ -1734,6 +1737,7 @@ end;
 function LambertWn1(z : ComplexType) : ComplexType;
 begin
          if (z = -Inv(C_EXP)) then Result := -1
+    else if (z = 0) then Result := -Infinity
     else if (isReal(z)) and (z.Re > -Inv(C_EXP).Re) and (z.Re < 0) then
     begin
         Result := LambertWn1_realnewton(z.Re)
@@ -1763,7 +1767,9 @@ end;
 // Eisenstein (1844)
 function InfPowerTower(z : ComplexType) : ComplexType;
 begin
-    Result := LambertW(-Ln(z))/Ln(z);
+         if (z = 1) then Result := 1
+    else if (z = 0) then Result := 0
+    else Result := -LambertW(-Ln(z))/Ln(z);
 end;
 
 end.
