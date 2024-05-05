@@ -145,11 +145,11 @@ function Newton(n, k : ComplexType) : ComplexType;
 function DirichletEta(z : ComplexType) : ComplexType;
 function RiemannZeta(z : ComplexType) : ComplexType;
 
-function LambertW0(z : ComplexType) : ComplexType;
-function LambertWn1(z : ComplexType) : ComplexType;
-function LambertW(z : ComplexType; k : IntegerType = 0) : ComplexType;
+function LambertW0(z : ComplexType) : ComplexType; // W_0
+function LambertWn1(z : ComplexType) : ComplexType; // W_-1
+function LambertW(z : ComplexType; k : IntegerType = 0) : ComplexType; // W_k
 
-function InfPowerTower(z : ComplexType) : ComplexType;
+function InfPowerTower(z : ComplexType) : ComplexType; // h(z) = z^z^z^...
 
 implementation
 
@@ -1439,7 +1439,6 @@ var
     s    : ComplexType;
     B    : array of ComplexType;
 begin
-    //writeln('ber');
     if (n > 10)
         then SetLength(B, n+1)
         else SetLength(B, 10+1);
@@ -1465,13 +1464,10 @@ begin
             s := 0.0;
             for k := 0 to i-1 do
                 s := s + 1.0 * B[k] * newton_intt(i,k) / (i - k + 1.0);
-            //B[i] := 1-s;
             B[i] := 1-s;
-            //writeln(#9, 'b(',i,') = ', AnsiString(B[i]));
             i := i+2;
         end;
     end;
-    //writeln('bernoulli(',n,') = ', AnsiString(B[n]));
     Result := B[n];
 end;
 
@@ -1537,34 +1533,6 @@ end;
 // W function
 
 // helpers
-
-function LambertW0_iter(z : ComplexType) : ComplexType;
-var
-    sum : ComplexType;
-    n   : IntegerType = 9;
-    A   : array[0..9,0..1] of IntegerType;
-    //n   : IntegerType = 9;
-    //A   : array[0..10,0..1] of ComplexType;
-begin
-    A[0][0] := 1; A[0][1] := 1;
-    A[1][0] := 1; A[1][1] := 1;
-    A[2][0] := 1; A[2][1] := 2;
-    A[3][0] := 5; A[3][1] := 3;
-    A[4][0] := 17; A[4][1] := 10;
-    A[5][0] := 133; A[5][1] := 17;
-    A[6][0] := 1927; A[6][1] := 190;
-    A[7][0] := 13582711; A[7][1] := 94423;
-    A[8][0] := 92612482895; A[8][1] := 1597966;
-    A[9][0] := 10402118970990527; A[9][1] := 8773814169;
-    //A[10][0] := 59203666396198716260449; A[10][1] := 10796179523602;
-    sum := A[n][0] * z / A[n][1];
-    while (n > 0) do
-    begin
-        n := n-1;
-        sum := (A[n][0]*z)/(A[n][1]+sum);
-    end;
-    Result := sum;
-end;
 
 function LambertW0_exp(z : ComplexType) : ComplexType;
 var
@@ -1662,12 +1630,11 @@ end;
 function LambertW_newtonHailey(z : ComplexType; w0 : ComplexType) : ComplexType;
 var
     n       : IntegerType = 10000;
-    //delta   : RealType = 2137;
     epsilon : RealType = 0.000000000000001;
 begin
     while (n > 0) and (Abs(xex(w0) - z) > epsilon) do
     begin
-        w0 := w0 - (xex(w0) - z)/(Exp(w0)*(w0+1) - ((w0+2)*(xex(w0)-z))/(2*w0+2));
+        w0 := w0 - (xex(w0) - z)/(xexd(w0) - ((xexdd(w0) - z*(w0+2)))/(2*w0+2));
         n := n - 1;
     end;
     Result := w0;
@@ -1679,10 +1646,8 @@ const
 var
     w0      : RealType;
     n       : IntegerType = 0;
-    //delta   : RealType = 2137;
     epsilon : RealType = 0.000000000000001;
 begin
-    //w0 := system.ln(z);
     w0 := system.ln(z) - system.ln(system.ln(z));
     while (n < limit) and (system.abs(xex(w0) - z) > epsilon) do
     begin
@@ -1700,7 +1665,6 @@ const
 var
     w0      : RealType;
     n       : IntegerType = 0;
-    //delta   : RealType = 2137;
     epsilon : RealType = 0.000000000000001;
 begin
     if (z <= -0.25) 
@@ -1714,7 +1678,7 @@ begin
     Result := w0;
 end;
 
-// huge thanks to Istvan Mezo
+// huge koszonom to Istvan Mezo
 // https://github.com/IstvanMezo/LambertW-function/blob/master/complex%20Lambert.cpp
 function LW_InitPoint(z : ComplexType; k : IntegerType) : ComplexType;
 var
