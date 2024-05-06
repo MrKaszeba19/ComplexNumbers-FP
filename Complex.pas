@@ -151,12 +151,26 @@ function LambertW(z : ComplexType; k : IntegerType = 0) : ComplexType; // W_k
 
 function InfPowerTower(z : ComplexType) : ComplexType; // h(z) = z^z^z^...
 
+function isInfinite(z : ComplexType) : Boolean; 
+function isReInfinite(z : ComplexType) : Boolean; 
+function isImInfinite(z : ComplexType) : Boolean; 
+function isTotalInfinite(z : ComplexType) : Boolean;    // is like inf+inf*i 
+function isFinite(z : ComplexType) : Boolean; 
+function RePosInfinity(im : RealType = 0) : ComplexType; // inf + im*i
+function ReNegInfinity(im : RealType = 0) : ComplexType; // -inf + im*i
+function ImPosInfinity(re : RealType = 0) : ComplexType; // re + inf*i
+function ImNegInfinity(re : RealType = 0) : ComplexType; // re - inf*i
+function ComplexInfinity1() : ComplexType;               // inf + inf*i
+function ComplexInfinity2() : ComplexType;               // -inf + inf*i
+function ComplexInfinity3() : ComplexType;               // -inf - inf*i
+function ComplexInfinity4() : ComplexType;               // inf - inf*i
+
 implementation
 
 uses Math, SysUtils;
 
 const
-    C_PI       = 3.1415926535897932384626433832795;       // pi
+    C_PI       = 3.141592653589793238462643383279502884;  // pi
     C_HALFPI   = 1.57079632679489661923132169163975;      // pi/2
     C_QURTPI   = 0.7853981633974483096156608458198757;    // pi/4
     C_SQRTPI   = 1.7724538509055160272981674833411;       // sqrt(pi)
@@ -1770,6 +1784,82 @@ begin
          if (z = 1) then Result := 1
     else if (z = 0) then Result := 0
     else Result := -LambertW(-Ln(z))/Ln(z);
+end;
+
+// -----------------------------------------------------------
+// infinities
+
+function isInfinite(z : ComplexType) : Boolean; 
+begin
+    Result := (Math.isInfinite(z.Re)) or (Math.isInfinite(z.Im));
+end;
+
+function isReInfinite(z : ComplexType) : Boolean; 
+begin
+    Result := (Math.isInfinite(z.Re));
+end;
+
+function isImInfinite(z : ComplexType) : Boolean; 
+begin
+    Result := (Math.isInfinite(z.Im));
+end;
+
+function isTotalInfinite(z : ComplexType) : Boolean; 
+begin
+    Result := (Math.isInfinite(z.Re)) and (Math.isInfinite(z.Im));
+end;
+
+function isFinite(z : ComplexType) : Boolean; 
+begin
+    Result := not (isInfinite(z));
+end;
+
+function RePosInfinity(im : RealType = 0) : ComplexType;
+begin
+    Result.Re := Infinity;
+    Result.Im := im;
+end;
+
+function ReNegInfinity(im : RealType = 0) : ComplexType;
+begin
+    Result.Re := -Infinity;
+    Result.Im := im;
+end;
+
+function ImPosInfinity(re : RealType = 0) : ComplexType;
+begin
+    Result.Re := re;
+    Result.Im := Infinity;
+end;
+
+function ImNegInfinity(re : RealType = 0) : ComplexType;
+begin
+    Result.Re := re;
+    Result.Im := -Infinity;
+end;
+
+function ComplexInfinity1() : ComplexType;
+begin
+    Result.Re := Infinity;
+    Result.Im := Infinity;
+end;
+
+function ComplexInfinity2() : ComplexType;
+begin
+    Result.Re := -Infinity;
+    Result.Im := Infinity;
+end;
+
+function ComplexInfinity3() : ComplexType;
+begin
+    Result.Re := -Infinity;
+    Result.Im := -Infinity;
+end;
+
+function ComplexInfinity4() : ComplexType;
+begin
+    Result.Re := Infinity;
+    Result.Im := -Infinity;
 end;
 
 end.

@@ -31,10 +31,10 @@ I decided to write my own complex numbers mechanism, as FreePascal's built-in me
 - Bernoulli numbers
 - Lambert's W function with all integer branches
 - Infinite power tower `h(z) = z^z^z^...`
+- Infinities
 
 ### Todo list
 - round
-- inifinities
 - Fresnel integrals
 
 ## Issues
