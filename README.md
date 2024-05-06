@@ -25,6 +25,7 @@ I decided to write my own complex numbers mechanism, as FreePascal's built-in me
 - li (logarithm integral)
 - sinc function
 - Si, Ci functions (sine integral, cosine integral)
+- Fresnel integrals
 - Newton symbol `(z,n)`
 - Dirichlet eta function
 - Riemann's zeta function
@@ -35,7 +36,6 @@ I decided to write my own complex numbers mechanism, as FreePascal's built-in me
 
 ### Todo list
 - round
-- Fresnel integrals
 
 ## Issues
 

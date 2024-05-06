@@ -140,6 +140,9 @@ function Beta(x, y : ComplexType) : ComplexType;
 function IncBeta(x, a, b : ComplexType) : ComplexType;
 function RegIncBeta(x, a, b : ComplexType) : ComplexType;
 
+function FresnelC(z : ComplexType) : ComplexType;
+function FresnelS(z : ComplexType) : ComplexType;
+
 function bernoulli_num(n : IntegerType) : ComplexType;
 function Newton(n, k : ComplexType) : ComplexType;
 function DirichletEta(z : ComplexType) : ComplexType;
@@ -1447,6 +1450,25 @@ begin
     else Result := IncBeta(x, a, b)/Beta(a, b);
 end;
 
+// --------------------------------------------------------
+// Fresnel integrals
+
+function FresnelC(z : ComplexType) : ComplexType;
+begin
+    if (isReal(z))
+        then Result := ((Imag+1)/2 * Erf(C_SQRTPI/2 * z * (1-Imag))).Re
+        else Result := (1-Imag)/4 * (Erf(C_SQRTPI*z*(1+Imag)/2) + Imag(Erf(C_SQRTPI*z*(1-Imag)/2)));
+end;
+
+function FresnelS(z : ComplexType) : ComplexType;
+begin
+    if (isReal(z))
+        then Result := ((Imag+1)/2 * Erf(C_SQRTPI/2 * z * (1-Imag))).Im
+        else Result := (1+Imag)/4 * (Erf(C_SQRTPI*z*(1+Imag)/2) - Imag(Erf(C_SQRTPI*z*(1-Imag)/2)));
+end;
+
+
+// --------------------------------------------------------
 // riemann zeta function
 
 // compute Bernoulli number B_n - works badly on large ones
