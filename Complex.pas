@@ -140,8 +140,8 @@ function Beta(x, y : ComplexType) : ComplexType;
 function IncBeta(x, a, b : ComplexType) : ComplexType;
 function RegIncBeta(x, a, b : ComplexType) : ComplexType;
 
-function FresnelC(z : ComplexType) : ComplexType;
-function FresnelS(z : ComplexType) : ComplexType;
+function FresnelC(z : ComplexType) : ComplexType; // Fresnel integral C(x)
+function FresnelS(z : ComplexType) : ComplexType; // Fresnel integral S(x)
 
 function bernoulli_num(n : IntegerType) : ComplexType;
 function Newton(n, k : ComplexType) : ComplexType;
@@ -157,7 +157,7 @@ function InfPowerTower(z : ComplexType) : ComplexType; // h(z) = z^z^z^...
 function isInfinite(z : ComplexType) : Boolean; 
 function isReInfinite(z : ComplexType) : Boolean; 
 function isImInfinite(z : ComplexType) : Boolean; 
-function isTotalInfinite(z : ComplexType) : Boolean;    // is like inf+inf*i 
+function isTotalInfinite(z : ComplexType) : Boolean;     // is like inf+inf*i 
 function isFinite(z : ComplexType) : Boolean; 
 function RePosInfinity(im : RealType = 0) : ComplexType; // inf + im*i
 function ReNegInfinity(im : RealType = 0) : ComplexType; // -inf + im*i
@@ -167,6 +167,11 @@ function ComplexInfinity1() : ComplexType;               // inf + inf*i
 function ComplexInfinity2() : ComplexType;               // -inf + inf*i
 function ComplexInfinity3() : ComplexType;               // -inf - inf*i
 function ComplexInfinity4() : ComplexType;               // inf - inf*i
+
+function ComplexRound(z : ComplexType) : ComplexType;
+function ComplexTrunc(z : ComplexType) : ComplexType;
+function ComplexFloor(z : ComplexType) : ComplexType;
+function ComplexCeil(z : ComplexType) : ComplexType;
 
 implementation
 
@@ -1882,6 +1887,33 @@ function ComplexInfinity4() : ComplexType;
 begin
     Result.Re := Infinity;
     Result.Im := -Infinity;
+end;
+
+// --------------------------------------------------------
+// rounds
+
+function ComplexRound(z : ComplexType) : ComplexType;
+begin
+    Result.Re := Round(z.Re);
+    Result.Im := Round(z.Im);
+end;
+
+function ComplexTrunc(z : ComplexType) : ComplexType;
+begin
+    Result.Re := Trunc(z.Re);
+    Result.Im := Trunc(z.Im);
+end;
+
+function ComplexFloor(z : ComplexType) : ComplexType;
+begin
+    Result.Re := Floor(z.Re);
+    Result.Im := Floor(z.Im);
+end;
+
+function ComplexCeil(z : ComplexType) : ComplexType;
+begin
+    Result.Re := Ceil(z.Re);
+    Result.Im := Ceil(z.Im);
 end;
 
 end.
