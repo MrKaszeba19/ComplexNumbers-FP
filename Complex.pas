@@ -28,6 +28,7 @@ operator := (a : ShortInt) res : ComplexType;
 operator := (a : ComplexType) res : String;
 function toString(a : ComplexType) : String;
 operator Explicit(a : ComplexType) : String;
+procedure Val(x : String; var num : ComplexType; var posError : ShortInt);
 
 operator Explicit(a : RealType) res : ComplexType;
 operator Explicit(a : Extended) res : ComplexType;
@@ -50,6 +51,7 @@ operator / (a : ComplexType; b : ComplexType) res : ComplexType;
 
 function Abs(a : ComplexType) : RealType;
 function Arg(a : ComplexType) : RealType;
+function Arg2(a : ComplexType) : RealType;
 function Conj(a : ComplexType) : ComplexType;
 function RePart(a : ComplexType) : RealType;
 function ImPart(a : ComplexType) : RealType;
@@ -68,6 +70,7 @@ function isReal(z : ComplexType) : Boolean;
 function isNotReal(z : ComplexType) : Boolean;
 function isImaginary(z : ComplexType) : Boolean;
 function isComplex(z : ComplexType) : Boolean;
+function isIntegerComplex(z : ComplexType) : Boolean;
 
 function Sqr(z : ComplexType) : ComplexType;
 function Cub(z : ComplexType) : ComplexType;
@@ -75,6 +78,7 @@ function Pow4(z : ComplexType) : ComplexType;
 function Pow5(z : ComplexType) : ComplexType;
 function Inv(z : ComplexType) : ComplexType;
 function Exp(z : ComplexType) : ComplexType;
+function ExpImag(z : ComplexType) : ComplexType;
 function Ln(z : ComplexType) : ComplexType;
 function Log(a,b : ComplexType) : ComplexType;
 function IntPow(x : ComplexType; y : IntegerType) : ComplexType;
@@ -131,21 +135,50 @@ function Erfc(z : ComplexType) : ComplexType;
 function Erfi(z : ComplexType) : ComplexType;
 function LowerGamma(s, x : ComplexType) : ComplexType;
 function UpperGamma(s, x : ComplexType) : ComplexType;
+function LowerRegGamma(s, x : ComplexType) : ComplexType;
 function Beta(x, y : ComplexType) : ComplexType;
 function IncBeta(x, a, b : ComplexType) : ComplexType;
 function RegIncBeta(x, a, b : ComplexType) : ComplexType;
+
+function FresnelC(z : ComplexType) : ComplexType; // Fresnel integral C(x)
+function FresnelS(z : ComplexType) : ComplexType; // Fresnel integral S(x)
 
 function bernoulli_num(n : IntegerType) : ComplexType;
 function Newton(n, k : ComplexType) : ComplexType;
 function DirichletEta(z : ComplexType) : ComplexType;
 function RiemannZeta(z : ComplexType) : ComplexType;
 
+function LambertW0(z : ComplexType) : ComplexType; // W_0
+function LambertWn1(z : ComplexType) : ComplexType; // W_-1
+function LambertW(z : ComplexType; k : IntegerType = 0) : ComplexType; // W_k
+
+function InfPowerTower(z : ComplexType) : ComplexType; // h(z) = z^z^z^...
+
+function isInfinite(z : ComplexType) : Boolean; 
+function isReInfinite(z : ComplexType) : Boolean; 
+function isImInfinite(z : ComplexType) : Boolean; 
+function isTotalInfinite(z : ComplexType) : Boolean;     // is like inf+inf*i 
+function isFinite(z : ComplexType) : Boolean; 
+function RePosInfinity(im : RealType = 0) : ComplexType; // inf + im*i
+function ReNegInfinity(im : RealType = 0) : ComplexType; // -inf + im*i
+function ImPosInfinity(re : RealType = 0) : ComplexType; // re + inf*i
+function ImNegInfinity(re : RealType = 0) : ComplexType; // re - inf*i
+function ComplexInfinity1() : ComplexType;               // inf + inf*i
+function ComplexInfinity2() : ComplexType;               // -inf + inf*i
+function ComplexInfinity3() : ComplexType;               // -inf - inf*i
+function ComplexInfinity4() : ComplexType;               // inf - inf*i
+
+function ComplexRound(z : ComplexType) : ComplexType;
+function ComplexTrunc(z : ComplexType) : ComplexType;
+function ComplexFloor(z : ComplexType) : ComplexType;
+function ComplexCeil(z : ComplexType) : ComplexType;
+
 implementation
 
 uses Math, SysUtils;
 
-const 
-    C_PI       = 3.1415926535897932384626433832795;       // pi
+const
+    C_PI       = 3.141592653589793238462643383279502884;  // pi
     C_HALFPI   = 1.57079632679489661923132169163975;      // pi/2
     C_QURTPI   = 0.7853981633974483096156608458198757;    // pi/4
     C_SQRTPI   = 1.7724538509055160272981674833411;       // sqrt(pi)
@@ -162,6 +195,10 @@ const
     C_PHI      = 1.6180339887498948482045868343656;       // phi - Golden ratio
     C_EM       = 0.5772156649015328606065120900824;       // Euler-Mascheroni constant
     C_OMEGA    = 0.56714329040978387299996866221035554;   // Omega constant
+<<<<<<< HEAD
+=======
+    C_EXPTOXP1 = 41.193555674716123563188287684364331978; // e^(e+1)
+>>>>>>> bfe66cd59823b17eb2e9a7d67b4e254f5fd44ea1
 
 
 // construction
@@ -306,6 +343,86 @@ begin
     res := ComplexNum(a, 0);
 end;
 
+procedure Val(x : String; var num : ComplexType; var posError : ShortInt);
+var
+    rea, ima : RealType;
+    x1, x2   : String;
+    i        : IntegerType;
+begin
+    system.val(x, rea, posError);
+    if (posError = 0)
+    then
+    begin
+        // read a real number
+        num := rea;
+    end else begin
+        // read a complex number
+        posError := 0;
+        x := StringReplace(x, 'j', 'i', [rfReplaceAll]);
+        x := StringReplace(x, ' ', '', [rfReplaceAll]);
+        if (x.Length > 1)
+        then
+        begin
+            // retrieve a complex number
+            x1 := ''+x[1];
+            i := 2;
+            while (i <= Length(x)) do
+            begin
+                if (x[i] in ['+', '-', 'i', 'j']) then break;
+                x1 := x1 + x[i];
+                i := i+1;
+            end;
+            if (x[i] in ['i', 'j']) then
+            begin
+                if (Length(x1) = 0) 
+                    then num := ComplexNum(0, 1)
+                else if (x1 = '-') 
+                    then num := ComplexNum(0, -1) 
+                else if (Length(x1) = 1) and (x1[1] in ['0'..'9']) 
+                        then num := ComplexNum(0, Ord(x1[1])-48)
+                else if (x1 = '+') 
+                    then num := ComplexNum(0, 1)
+                else if (x1 = '.') or (x1 = '-.') or (x1 = '+.')
+                    then posError := 1
+                else begin
+                    posError := 1;
+                    system.val(x1, rea, posError);   
+                    if (posError = 0) then num := ComplexNum(0, rea);
+                end;
+                if (RightStr(x, Length(x)-i) <> '') then posError := 1;
+                exit; 
+            end;
+            posError := 1;
+            system.val(x1, rea, posError);
+            if (posError = 0) then
+            begin
+                x2 := ''+x[i];
+                while (i < Length(x)) do
+                begin
+                    i := i+1;
+                    if (x[i] in ['i', 'j']) then break;
+                    x2 := x2 + x[i];
+                end;
+                if (x2 = '-') 
+                    then num := ComplexNum(rea, -1) 
+                else if (x2 = '+') 
+                    then num := ComplexNum(rea, 1)
+                else if (x2 = '-.') or (x2 = '+.')
+                    then posError := 1
+                else begin
+                    posError := 1;
+                    system.val(x2, ima, posError);   
+                    if (posError = 0) then num := ComplexNum(rea, ima);
+                end;
+                if (RightStr(x, Length(x)-i) <> '') then posError := 1;
+                exit; 
+            end;
+        end else begin
+            posError := 1;
+        end;
+    end;
+end;
+
 // logical
 
 operator = (a : ComplexType; b : ComplexType) : Boolean;
@@ -388,6 +505,21 @@ begin
     end;
 end;
 
+function Arg2(a : ComplexType) : RealType;
+begin
+    if (Abs(a) = 0) then
+    begin
+        Result := NaN;
+    end else begin
+        if (a.Im >= 0) then
+        begin
+            Result := Math.arccos(a.Re / Abs(a));
+        end else begin
+            Result := 2*C_PI-Math.arccos(a.Re / Abs(a));
+        end;
+    end;
+end;
+
 function Conj(a : ComplexType) : ComplexType;
 begin
     Result := ComplexNum(a.Re, -a.Im);
@@ -422,19 +554,20 @@ end;
 
 function Pi() : RealType;
 begin
-    Result := 3.1415926535897932384626433832795;
-    //Result := Arg(-1);
-    //Result := system.Pi;
+    //Result := 3.1415926535897932384626433832795;
+    Result := C_PI;
 end;
 
 function GoldenNum() : RealType;
 begin
-    Result := 1.6180339887498948482045868343656;
+    //Result := 1.6180339887498948482045868343656;
+    Result := C_PHI;
 end;
 
 function EulerMascheroni() : RealType;
 begin
-    Result := 0.5772156649015328606065120900824;
+    //Result := 0.5772156649015328606065120900824;
+    Result := C_EM;
 end;
 
 function Sqr(z : ComplexType) : ComplexType;
@@ -500,6 +633,11 @@ begin
     Result := True;
 end;
 
+function isIntegerComplex(z : ComplexType) : Boolean;
+begin
+    Result := (z.Re = Int(z.Re)) and (z.Im = Int(z.Im));
+end;
+
 
 // more functions
 
@@ -508,6 +646,11 @@ begin
     if (z.Im = 0) 
         then Result := system.exp(z.Re)
         else Result := system.exp(z.Re)*(system.cos(z.Im) + Imag(system.sin(z.Im)));
+end;
+
+function ExpImag(z : ComplexType) : ComplexType;
+begin
+    Result := system.Cos(z.Im) + Imag(system.sin(z.Im));    
 end;
 
 function Ln(z : ComplexType) : ComplexType;
@@ -561,20 +704,16 @@ end;
 
 function Pow(a,b : ComplexType) : ComplexType;
 begin
-    //if (isInteger(b))
-    //then begin
-    //    Result := IntPow(a, trunc(b.Re));
-    //end else begin
-    //    Result := Exp(b * Ln(a));
-    //end;
-    if (isInteger(b))
+    if (a = 0) then begin
+        if (b.Re <= 0) 
+            then Result := NaN
+            else Result := 0;
+    end else if (isInteger(b))
     then begin
-        //if (Abs(a) = 1) 
         if (a*a*a*a = 1)
             then Result := unitcirclepowTo(a,b)
             else Result := IntPow(a, trunc(b.Re));
     end else begin
-        //if (Abs(a) = 1) 
         if (a*a*a*a = 1)
             then Result := unitcirclepowTo(a,b)
             else Result := Exp(b * Ln(a));
@@ -583,8 +722,6 @@ end;
 
 function Sqrt(a : ComplexType) : ComplexType;
 begin
-    // to improve
-    //Result := Exp(Ln(a)/2);
     if (a.Im = 0) and (a.Re >= 0) then
     begin
         Result := system.sqrt(a.Re);
@@ -609,7 +746,9 @@ begin
         Result := Inv(RealRoot(a,b));
     end else if (a < 0) and (isInteger(b)) and (trunc(b) mod 2 = 1)
         then Result := -Pow(system.abs(a),Inv(b))
-        else Result := Pow(a,Inv(b)); 
+        else begin
+            Result := Pow(a,Inv(b));
+        end;
 end;
 
 function Root(a,b : ComplexType) : ComplexType;
@@ -622,10 +761,10 @@ begin
     end else if (isReal(b)) then begin
         if (b.Re < 0) then begin
             Result := Inv(Root(a,-b.Re));
-        end else if isInteger(b) then
-        begin
-            Result := ComplexNumPolar(RealRoot(Abs(a), b.Re).Re, Arg(a)/b.Re);
-            //Result := Pow(a,Inv(b.Re));
+        //end else if isInteger(b) then
+        //begin
+        //    Result := ComplexNumPolar(RealRoot(Abs(a), b.Re).Re, Arg(a)/b.Re);
+        //    //Result := Pow(a,Inv(b.Re));
         end else begin
             Result := Pow(a,Inv(b.Re));
         end;
@@ -636,15 +775,7 @@ end;
 
 function MinusOneTo(z : ComplexType) : ComplexType;
 begin
-    if (isInteger(z))
-        then if (Int(z.Re) mod 2 = 0) 
-                 then Result := 1
-                 else Result := -1
-        else if (isInteger(2*z))
-                 then if (Int(2*z.Re) mod 2 = 0) 
-                          then Result := Imag
-                          else Result := -Imag
-                 else Result := Exp(z * Imag * Pi);
+    Result := ImagTo(2*z);
 end;
 
 function ImagTo(z : ComplexType) : ComplexType;
@@ -906,9 +1037,9 @@ begin
 end;
 
 function LogInt(z : ComplexType) : ComplexType; // li(z)
-var
-    sum : ComplexType;
-    n   : IntegerType = 50;
+//var
+//    sum : ComplexType;
+//    n   : IntegerType = 50;
 begin
     if (z = 0) then Result := 0
     else if (z = 1) then Result := -Infinity
@@ -916,7 +1047,7 @@ begin
     begin
         Result := ExpInt(Ln(z));
     end else begin
-        // TODO check this piece of code, probably does not work
+        // TODO check this piece of code
         Result := ExpInt(Ln(z));
         //sum := (2*n+1)-Ln(z)-Sqr(n+1)/((2*n+3)-Ln(z));
         //while (n > 0) do
@@ -1066,12 +1197,26 @@ function LogGamma_real(z : ComplexType) : ComplexType;
 var
     j              : IntegerType;
     x, y, tmp, ser : ComplexType;
-    cof            : Array of ComplexType;
+    cof            : Array[0..13] of ComplexType;
 begin 
-    cof := [57.1562356658629235, -59.5979603554754912, 14.1360979747417471,
-    -0.491913816097620199,0.339946499848118887e-4, 0.465236289270485756e-4, -0.983744753048795646e-4, 
-    0.158088703224912494e-3, -0.210264441724104883e-3, 0.217439618115212643e-3,-0.164318106536763890e-3, 
-    0.844182239838527433e-4,-0.261908384015814087e-4,0.368991826595316234e-5];
+    //cof := [57.1562356658629235, -59.5979603554754912, 14.1360979747417471,
+    //-0.491913816097620199,0.339946499848118887e-4, 0.465236289270485756e-4, -0.983744753048795646e-4,
+    //0.158088703224912494e-3, -0.210264441724104883e-3, 0.217439618115212643e-3,-0.164318106536763890e-3,
+    //0.844182239838527433e-4,-0.261908384015814087e-4,0.368991826595316234e-5];
+    cof[0] := 57.1562356658629235;
+    cof[1] := -59.5979603554754912;
+    cof[2] := 14.1360979747417471;
+    cof[3] := -0.491913816097620199;
+    cof[4] := 0.339946499848118887e-4;
+    cof[5] := 0.465236289270485756e-4;
+    cof[6] := -0.983744753048795646e-4;
+    cof[7] := 0.158088703224912494e-3;
+    cof[8] := -0.210264441724104883e-3;
+    cof[9] := 0.217439618115212643e-3;
+    cof[10] := -0.164318106536763890e-3;
+    cof[11] := 0.844182239838527433e-4;
+    cof[12] := -0.261908384015814087e-4;
+    cof[13] := 0.368991826595316234e-5;
     //if (xx <= 0) throw('bad arg in gammln');
     x := z;
     y := x;
@@ -1104,16 +1249,65 @@ end;
 
 // error functions
 
+<<<<<<< HEAD
 function Erfc(z : ComplexType) : ComplexType;
+=======
+function Erf2(z : ComplexType) : ComplexType;
+>>>>>>> bfe66cd59823b17eb2e9a7d67b4e254f5fd44ea1
 var
     sum : ComplexType;
     n   : IntegerType = 200;
 begin
+<<<<<<< HEAD
     if z.Re < 0 then
         Result := 2 - Erfc(-z)
     else if z = 0 then
+=======
+    //writeln('erf');
+    if z = 0 then
+>>>>>>> bfe66cd59823b17eb2e9a7d67b4e254f5fd44ea1
     begin
         Result := 1;
+    end else begin
+<<<<<<< HEAD
+        sum := (4*n+1) + 2*Sqr(z) - ((2*n+1)*(2*n+2));
+        while (n > 0) do
+=======
+        if (Abs(z) > 100)
+            then limit := trunc(10000*Abs(z))+1
+		    else limit := trunc(100000*Abs(z))+1;
+        //writeln('lim ' , limit);
+        s := 0;
+        epsilon := 50.0;
+        n := 0;
+        while (n < limit)
+        and (epsilon > 0.0000000000001) do
+>>>>>>> bfe66cd59823b17eb2e9a7d67b4e254f5fd44ea1
+        begin
+            sum := (4*n-3) + 2*Sqr(z) - ((2*n-1)*(2*n))/sum;
+            n := n-1;
+        end;
+        Result := (C_2DSQPI * z * Exp(-Sqr(z)))/sum;
+    end;
+end;
+
+function Erf(z : ComplexType) : ComplexType;
+begin
+    Result := 1.0 - Erfc(z);
+end;
+
+function Erfc(z : ComplexType) : ComplexType;
+var
+    sum : ComplexType;
+    n   : IntegerType = 500;
+begin
+    if z.Re < 0 then
+        Result := 2 - Erfc(-z)
+    else if z = 0 then
+        Result := 1
+    else if z.Re = 0 then
+    begin
+        Result := 1-Erf2(z);
     end else begin
         sum := (4*n+1) + 2*Sqr(z) - ((2*n+1)*(2*n+2));
         while (n > 0) do
@@ -1130,10 +1324,6 @@ begin
     Result := 1.0 - Erfc(z);
 end;
 
-function Erfc(z : ComplexType) : ComplexType;
-begin
-    Result := 1.0 - Erf(z);
-end;
 
 function Erfi(z : ComplexType) : ComplexType;
 begin
@@ -1187,6 +1377,11 @@ begin
     end else begin
         Result := Gamma(s) - UpperGamma(s,x);
     end;
+end;
+
+function LowerRegGamma(s, x : ComplexType) : ComplexType;
+begin
+    Result := LowerGamma(s,x)/Gamma(s);
 end;
 
 // beta function with some help
@@ -1275,6 +1470,25 @@ begin
     else Result := IncBeta(x, a, b)/Beta(a, b);
 end;
 
+// --------------------------------------------------------
+// Fresnel integrals
+
+function FresnelC(z : ComplexType) : ComplexType;
+begin
+    if (isReal(z))
+        then Result := ((Imag+1)/2 * Erf(C_SQRTPI/2 * z * (1-Imag))).Re
+        else Result := (1-Imag)/4 * (Erf(C_SQRTPI*z*(1+Imag)/2) + Imag(Erf(C_SQRTPI*z*(1-Imag)/2)));
+end;
+
+function FresnelS(z : ComplexType) : ComplexType;
+begin
+    if (isReal(z))
+        then Result := ((Imag+1)/2 * Erf(C_SQRTPI/2 * z * (1-Imag))).Im
+        else Result := (1+Imag)/4 * (Erf(C_SQRTPI*z*(1+Imag)/2) - Imag(Erf(C_SQRTPI*z*(1-Imag)/2)));
+end;
+
+
+// --------------------------------------------------------
 // riemann zeta function
 
 // compute Bernoulli number B_n - works badly on large ones
@@ -1284,7 +1498,6 @@ var
     s    : ComplexType;
     B    : array of ComplexType;
 begin
-    //writeln('ber');
     if (n > 10)
         then SetLength(B, n+1)
         else SetLength(B, 10+1);
@@ -1310,13 +1523,10 @@ begin
             s := 0.0;
             for k := 0 to i-1 do
                 s := s + 1.0 * B[k] * newton_intt(i,k) / (i - k + 1.0);
-            //B[i] := 1-s;
             B[i] := 1-s;
-            //writeln(#9, 'b(',i,') = ', AnsiString(B[i]));
             i := i+2;
         end;
     end;
-    //writeln('bernoulli(',n,') = ', AnsiString(B[n]));
     Result := B[n];
 end;
 
@@ -1362,12 +1572,6 @@ begin
 end;
 
 function RiemannZeta(z : ComplexType) : ComplexType;
-var
-    //limit, n : IntegerType;
-    sum      : ComplexType;
-    sum2     : ComplexType;
-    limit, n, k : IntegerType;  
-    //sum1, sum2  : ComplexType;
 begin
          if (z = -1) then Result := -1/12
     else if (z = 0) then Result := -1.0/2
@@ -1383,5 +1587,352 @@ begin
     end;
 end;
 
+// --------------------------------------------------------
+// lambert lambert ty k
+// W function
 
+// helpers
+
+function LambertW0_exp(z : ComplexType) : ComplexType;
+var
+    sum : ComplexType;
+    n   : IntegerType = 100;
+begin
+    sum := z/Exp(z);
+    while (n >= 0) do
+    begin
+        sum := z/Exp(sum);
+        n := n-1;
+    end;
+    Result := sum;
+end;
+
+function LambertW0_ln(z : ComplexType) : ComplexType;
+var
+    sum : ComplexType;
+    n   : IntegerType = 100;
+begin
+    sum := Ln(z);
+    while (n >= 0) do
+    begin
+        sum := Ln(z/sum);
+        n := n-1;
+    end;
+    Result := sum;
+end;
+
+<<<<<<< HEAD
+=======
+
+function xex(x : RealType) : RealType;
+begin
+    Result := x * system.exp(x);
+end;
+
+function xex(x : ComplexType) : ComplexType;
+begin
+    Result := x * Exp(x);
+end;
+
+function xexd(x : ComplexType) : ComplexType;
+begin
+    Result := (x+1) * Exp(x);
+end;
+
+function xexdd(x : ComplexType) : ComplexType;
+begin
+    Result := (x+2) * Exp(x);
+end;
+
+// approx for reals between e and e^(1+e)
+function LambertW0_realapprox(z, a, b : RealType) : RealType;
+var
+    res, dif : RealType;
+    res0     : RealType = 0;
+    epsilon  : RealType = 0.000000000000001;
+    n        : IntegerType = 1000;
+begin
+    dif := 2137;
+    res := 1;
+    while (n > 0) 
+    and (dif >= epsilon) 
+    do
+    begin
+        if (xex(a) = z) then
+        begin
+            res := a;
+            dif := 0;
+        end else if (xex(b) = z) then
+        begin
+            res := b;
+            dif := 0;
+        end else begin
+            res := (a+b)/2;
+            if (xex(res) = z) then
+            begin
+                dif := 0;
+            end else if (xex(res) > z) then
+            begin
+                b := res;
+                dif := system.abs(res - res0);
+                res0 := res;
+            end else begin
+                a := res;
+                dif := system.abs(res - res0);
+                res0 := res;
+            end;
+        end;
+        n := n-1;
+    end;
+    Result := res;
+end;
+
+// approximation for complex numbers
+function LambertW_newtonHailey(z : ComplexType; w0 : ComplexType) : ComplexType;
+var
+    n       : IntegerType = 10000;
+    epsilon : RealType = 0.000000000000001;
+begin
+    while (n > 0) and (Abs(xex(w0) - z) > epsilon) do
+    begin
+        w0 := w0 - (xex(w0) - z)/(xexd(w0) - ((xexdd(w0) - z*(w0+2)))/(2*w0+2));
+        n := n - 1;
+    end;
+    Result := w0;
+end;
+
+function LambertW0_newton2(z : RealType) : RealType;
+const
+    limit = 10;
+var
+    w0      : RealType;
+    n       : IntegerType = 0;
+    epsilon : RealType = 0.000000000000001;
+begin
+    w0 := system.ln(z) - system.ln(system.ln(z));
+    while (n < limit) and (system.abs(xex(w0) - z) > epsilon) do
+    begin
+        w0 := (w0)/(1+w0) * (1 + system.ln(z/w0));
+        n := n + 1;
+    end;
+    if (n < limit) // for some reason newton2 either does its job in 3-5 steps, or it can't finish within 10000 steps
+        then Result := w0
+        else Result := LambertW0_realapprox(z, 1, C_EXP); // this approximation takes at most 50 steps in general
+end;
+
+function LambertWn1_realnewton(z : RealType) : RealType;
+const
+    limit = 10000;
+var
+    w0      : RealType;
+    n       : IntegerType = 0;
+    epsilon : RealType = 0.000000000000001;
+begin
+    if (z <= -0.25) 
+        then w0 := -1 - system.sqrt(2)*system.sqrt(1 + C_EXP*z)
+        else w0 := system.ln(-z) - system.ln(-system.ln(-z));
+    while (n < limit) and (system.abs(xex(w0) - z) > epsilon) do
+    begin
+        w0 := (w0)/(1+w0) * (1 + system.ln(z/w0));
+        n := n + 1;
+    end;
+    Result := w0;
+end;
+
+// huge koszonom to Istvan Mezo
+// https://github.com/IstvanMezo/LambertW-function/blob/master/complex%20Lambert.cpp
+function LW_InitPoint(z : ComplexType; k : IntegerType) : ComplexType;
+var
+    ip, p : ComplexType;
+    two_pi_k_I : ComplexType;
+begin
+	two_pi_k_I := ComplexNum(0, 2 * C_PI * k);
+	ip := Ln(z) + two_pi_k_I - Ln(Ln(z) + two_pi_k_I);
+	p := Sqrt(2 * (C_EXP * z + 1));
+
+	if (Abs(z - (-exp(-1))) <= 1) then
+	begin
+		if (k = 0) 
+            then ip := -1 + p - Sqr(p)/3 + 11./72. * Cub(p);
+		if ((k = 1) and (z.Im < 0))
+		or ((k = -1) and (z.Im > 0)) 
+            then ip := -1 - p - Sqr(p)/3 - 11*Cub(p)/72;
+	end;
+
+	if  (k = 0) 
+    and (Abs(z - 0.5) <= 0.5)
+    then ip := (0.35173371 * (0.1237166 + 7.061302897 * z)) / (2.827184 * (2*z + 1));
+
+	if (k = -1) and (Abs(z - 0.5) <= 0.5) 
+    then ip := -(((2.2591588985 + Imag(4.22096)) * ((-14.073271 - Imag(33.767687754)) 
+            * z - (12.7127 - Imag(19.071643)) * (2*z + 1))) 
+            / (2.0 - (17.23103 - Imag(10.629721)) * (2*z + 1)));
+
+	Result := ip;
+end;
+
+// lambert W function main definitions
+
+function LambertW0(z : ComplexType) : ComplexType;
+begin
+         if (z = 0) then Result := 0
+    else if (z = 1) then Result := C_OMEGA
+    else if (z = C_EXP) then Result := 1
+    else if (z = Exp(1+C_EXP)) then Result := C_EXP
+    else if (z = Sqrt(C_EXP)/2) then Result := 0.5
+    else if (z = 2*C_LN2) then Result := C_LN2
+    else if (z = -Inv(C_EXP)) then Result := -1
+    else if (z = -C_HALFPI) then Result := Imag(C_HALFPI)
+    else if (Abs(z) > C_EXPTOXP1) then Result := LambertW0_ln(z)
+    else if (
+        (not ((isReal(z)) and (z.Re <= -Inv(C_EXP).Re))) 
+        and (Abs(z) < C_EXP) 
+        ) then Result := LambertW0_exp(z)
+    else if ((isReal(z)) and (z.Re > C_EXP) and (z.Re < C_EXPTOXP1)) then Result := LambertW0_newton2(z.Re)
+    else Result := LambertW_newtonHailey(z, Ln(z));
+end;
+
+function LambertWn1(z : ComplexType) : ComplexType;
+begin
+         if (z = -Inv(C_EXP)) then Result := -1
+    else if (z = 0) then Result := -Infinity
+    else if (isReal(z)) and (z.Re > -Inv(C_EXP).Re) and (z.Re < 0) then
+    begin
+        Result := LambertWn1_realnewton(z.Re)
+    end else begin
+        Result := LambertW_newtonHailey(z, LW_InitPoint(z,-1));
+    end;
+end;
+
+// Lambert W function for all branches
+function LambertW(z : ComplexType; k : IntegerType = 0) : ComplexType;
+begin
+    if (z = 0) then 
+    begin
+        if (k = 0) then Result := 0 else Result := -Infinity; 
+    end 
+    else if (z = -Inv(C_EXP)) and ((k = 0) or (k = -1)) then Result := -1
+	else if (z = C_EXP) and (k = 0) then Result := 1
+    else case k of
+        -1 : Result := LambertWn1(z);
+        0  : Result := LambertW0(z);
+        else Result := LambertW_newtonHailey(z, LW_InitPoint(z,k));
+    end;
+end;
+
+// -----------------------------------------------------------
+// Euler power tower h(x) = x^x^x^x^...
+// Eisenstein (1844)
+function InfPowerTower(z : ComplexType) : ComplexType;
+begin
+         if (z = 1) then Result := 1
+    else if (z = 0) then Result := 0
+    else if (z = Pow(C_EXP, Inv(C_EXP))) then Result := C_EXP
+    else Result := -LambertW(-Ln(z))/Ln(z);
+end;
+
+// -----------------------------------------------------------
+// infinities
+
+function isInfinite(z : ComplexType) : Boolean; 
+begin
+    Result := (Math.isInfinite(z.Re)) or (Math.isInfinite(z.Im));
+end;
+
+function isReInfinite(z : ComplexType) : Boolean; 
+begin
+    Result := (Math.isInfinite(z.Re));
+end;
+
+function isImInfinite(z : ComplexType) : Boolean; 
+begin
+    Result := (Math.isInfinite(z.Im));
+end;
+
+function isTotalInfinite(z : ComplexType) : Boolean; 
+begin
+    Result := (Math.isInfinite(z.Re)) and (Math.isInfinite(z.Im));
+end;
+
+function isFinite(z : ComplexType) : Boolean; 
+begin
+    Result := not (isInfinite(z));
+end;
+
+function RePosInfinity(im : RealType = 0) : ComplexType;
+begin
+    Result.Re := Infinity;
+    Result.Im := im;
+end;
+
+function ReNegInfinity(im : RealType = 0) : ComplexType;
+begin
+    Result.Re := -Infinity;
+    Result.Im := im;
+end;
+
+function ImPosInfinity(re : RealType = 0) : ComplexType;
+begin
+    Result.Re := re;
+    Result.Im := Infinity;
+end;
+
+function ImNegInfinity(re : RealType = 0) : ComplexType;
+begin
+    Result.Re := re;
+    Result.Im := -Infinity;
+end;
+
+function ComplexInfinity1() : ComplexType;
+begin
+    Result.Re := Infinity;
+    Result.Im := Infinity;
+end;
+
+function ComplexInfinity2() : ComplexType;
+begin
+    Result.Re := -Infinity;
+    Result.Im := Infinity;
+end;
+
+function ComplexInfinity3() : ComplexType;
+begin
+    Result.Re := -Infinity;
+    Result.Im := -Infinity;
+end;
+
+function ComplexInfinity4() : ComplexType;
+begin
+    Result.Re := Infinity;
+    Result.Im := -Infinity;
+end;
+
+// --------------------------------------------------------
+// rounds
+
+function ComplexRound(z : ComplexType) : ComplexType;
+begin
+    Result.Re := Round(z.Re);
+    Result.Im := Round(z.Im);
+end;
+
+function ComplexTrunc(z : ComplexType) : ComplexType;
+begin
+    Result.Re := Trunc(z.Re);
+    Result.Im := Trunc(z.Im);
+end;
+
+function ComplexFloor(z : ComplexType) : ComplexType;
+begin
+    Result.Re := Floor(z.Re);
+    Result.Im := Floor(z.Im);
+end;
+
+function ComplexCeil(z : ComplexType) : ComplexType;
+begin
+    Result.Re := Ceil(z.Re);
+    Result.Im := Ceil(z.Im);
+end;
+
+>>>>>>> bfe66cd59823b17eb2e9a7d67b4e254f5fd44ea1
 end.
