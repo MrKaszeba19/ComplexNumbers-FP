@@ -30,10 +30,17 @@ I decided to write my own complex numbers mechanism, as FreePascal's built-in me
 - Riemann's zeta function
 
 ### Todo list
-- round
 - Lambert's W function with branches
 - inifinities
 - Fresnel integrals
+
+### For future (maybe)
+- trunc
+- frac
+- round
+- floor
+- ceiling
+- integer casting `Int()`
 
 
 

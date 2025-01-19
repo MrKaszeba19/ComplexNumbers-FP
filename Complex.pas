@@ -158,8 +158,10 @@ const
     C_QUPI90   = 1.0823232337111381915160036965411679;    // pi^4 / 90
     C_7QUPI720 = 0.9470328294972459175765032344735219149; // 7pi^4 / 720
     C_APERY    = 1.20205690315959428539973816151145;      // Apery's constant
+    C_EXP      = 2.718281828459045235360287471352662;     // Euler constant
     C_PHI      = 1.6180339887498948482045868343656;       // phi - Golden ratio
     C_EM       = 0.5772156649015328606065120900824;       // Euler-Mascheroni constant
+    C_OMEGA    = 0.56714329040978387299996866221035554;   // Omega constant
 
 
 // construction
@@ -1102,38 +1104,30 @@ end;
 
 // error functions
 
-function Erf(z : ComplexType) : ComplexType;
+function Erfc(z : ComplexType) : ComplexType;
 var
-    limit, n : IntegerType;
-    s1, s, p : ComplexType;
-	epsilon  : RealType;
-    k        : IntegerType;
+    sum : ComplexType;
+    n   : IntegerType = 200;
 begin
-    if z = 0 then
+    if z.Re < 0 then
+        Result := 2 - Erfc(-z)
+    else if z = 0 then
     begin
-        Result := 0;
+        Result := 1;
     end else begin
-        if (Abs(z) > 100) 
-            then limit := trunc(10000*Abs(z))+1
-		    else limit := trunc(100000*Abs(z))+1;
-        //writeln('lim ' , limit);
-        s := 0;
-        epsilon := 50.0;
-        n := 0;
-        while (n < limit) 
-        and (epsilon > 0.0000000000001) do
+        sum := (4*n+1) + 2*Sqr(z) - ((2*n+1)*(2*n+2));
+        while (n > 0) do
         begin
-            s1 := s;
-            p := 1.0;
-            for k := 1 to n do
-                p := p * (-z*z)/k;
-            s := s + p * (z/(2*n+1));
-            epsilon := Abs(s-s1);
-            n := n + 1;
+            sum := (4*n-3) + 2*Sqr(z) - ((2*n-1)*(2*n))/sum;
+            n := n-1;
         end;
-        s := s * C_2DSQPI; // 2/sqrt(pi)
-        Result := s;
+        Result := (C_2DSQPI * z * Exp(-Sqr(z)))/sum;
     end;
+end;
+
+function Erf(z : ComplexType) : ComplexType;
+begin
+    Result := 1.0 - Erfc(z);
 end;
 
 function Erfc(z : ComplexType) : ComplexType;
@@ -1367,9 +1361,6 @@ begin
     end;
 end;
 
-
-// TODO
-// try Dirichlet eta function
 function RiemannZeta(z : ComplexType) : ComplexType;
 var
     //limit, n : IntegerType;
@@ -1391,8 +1382,6 @@ begin
         Result := DirichletEta(z) * Inv(1-Pow(2,1-z));
     end;
 end;
-
-
 
 
 end.
