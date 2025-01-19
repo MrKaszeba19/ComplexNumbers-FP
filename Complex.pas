@@ -195,10 +195,8 @@ const
     C_PHI      = 1.6180339887498948482045868343656;       // phi - Golden ratio
     C_EM       = 0.5772156649015328606065120900824;       // Euler-Mascheroni constant
     C_OMEGA    = 0.56714329040978387299996866221035554;   // Omega constant
-<<<<<<< HEAD
-=======
     C_EXPTOXP1 = 41.193555674716123563188287684364331978; // e^(e+1)
->>>>>>> bfe66cd59823b17eb2e9a7d67b4e254f5fd44ea1
+
 
 
 // construction
@@ -1249,30 +1247,18 @@ end;
 
 // error functions
 
-<<<<<<< HEAD
-function Erfc(z : ComplexType) : ComplexType;
-=======
 function Erf2(z : ComplexType) : ComplexType;
->>>>>>> bfe66cd59823b17eb2e9a7d67b4e254f5fd44ea1
 var
-    sum : ComplexType;
-    n   : IntegerType = 200;
+    limit, n : IntegerType;
+    s1, s, p : ComplexType;
+	epsilon  : RealType;
+    k        : IntegerType;
 begin
-<<<<<<< HEAD
-    if z.Re < 0 then
-        Result := 2 - Erfc(-z)
-    else if z = 0 then
-=======
     //writeln('erf');
     if z = 0 then
->>>>>>> bfe66cd59823b17eb2e9a7d67b4e254f5fd44ea1
     begin
-        Result := 1;
+        Result := 0;
     end else begin
-<<<<<<< HEAD
-        sum := (4*n+1) + 2*Sqr(z) - ((2*n+1)*(2*n+2));
-        while (n > 0) do
-=======
         if (Abs(z) > 100)
             then limit := trunc(10000*Abs(z))+1
 		    else limit := trunc(100000*Abs(z))+1;
@@ -1282,18 +1268,18 @@ begin
         n := 0;
         while (n < limit)
         and (epsilon > 0.0000000000001) do
->>>>>>> bfe66cd59823b17eb2e9a7d67b4e254f5fd44ea1
         begin
-            sum := (4*n-3) + 2*Sqr(z) - ((2*n-1)*(2*n))/sum;
-            n := n-1;
+            s1 := s;
+            p := 1.0;
+            for k := 1 to n do
+                p := p * (-z*z)/k;
+            s := s + p * (z/(2*n+1));
+            epsilon := Abs(s-s1);
+            n := n + 1;
         end;
-        Result := (C_2DSQPI * z * Exp(-Sqr(z)))/sum;
+        s := s * C_2DSQPI; // 2/sqrt(pi)
+        Result := s;
     end;
-end;
-
-function Erf(z : ComplexType) : ComplexType;
-begin
-    Result := 1.0 - Erfc(z);
 end;
 
 function Erfc(z : ComplexType) : ComplexType;
@@ -1621,9 +1607,6 @@ begin
     Result := sum;
 end;
 
-<<<<<<< HEAD
-=======
-
 function xex(x : RealType) : RealType;
 begin
     Result := x * system.exp(x);
@@ -1934,5 +1917,4 @@ begin
     Result.Im := Ceil(z.Im);
 end;
 
->>>>>>> bfe66cd59823b17eb2e9a7d67b4e254f5fd44ea1
 end.
