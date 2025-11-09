@@ -14,6 +14,7 @@ I decided to write my own complex numbers mechanism, as FreePascal's built-in me
 - trigonometric functions and their inverses
 - hyperbolic and area functions
 - MinusOneTo, ImagTo, MinusImagTo
+- hypotenuses for 2D and 3D
 - isZero, isNatural, isInteger, isReal, isNotReal, isImaginary, isComplex boolean functions
 - ComplexNumPolar (initializing a complex number with polar coords)
 - gamma, gammaln functions
@@ -34,29 +35,25 @@ I decided to write my own complex numbers mechanism, as FreePascal's built-in me
 - Infinite power tower `h(z) = z^z^z^...`
 - Infinities
 - Complex round functions
-
-<<<<<<< HEAD
-### Todo list
 - Lambert's W function with branches
 - inifinities
 - Fresnel integrals
+- integer casting `Int()`
+- complex versions of `trunc`, `round`, `floor`, `ceiling`
+
 
 ### For future (maybe)
-- trunc
-- frac
-- round
-- floor
-- ceiling
-- integer casting `Int()`
+- `frac`
+- tetration and superlogarithm
 
 =======
 ## Issues
->>>>>>> bfe66cd59823b17eb2e9a7d67b4e254f5fd44ea1
 
 - The complex type substitutes `Extended` type almost plug and play, except for:
   * inequalities (for mathematical reasons one can't set any linear order for complex numbers) 
   * putting them into `write`/`writeln` - they must be cast with `AnsiString()`.
 - Bernoulli numbers generation may produce wrong results at `n >= 40`.
+- Infinite power tower may not produce accurate results when approaching the convergence borders for real numbers.
 
 ## References
 

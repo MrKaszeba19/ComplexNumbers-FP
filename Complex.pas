@@ -39,6 +39,12 @@ operator Explicit(a : Int64) res : ComplexType;
 //operator Explicit(a : Integer) res : ComplexType;
 operator Explicit(a : ShortInt) res : ComplexType;
 
+function Int(z : ComplexType) : IntegerType;
+function Int(z : ComplexType) : Int64;
+function Int(z : ComplexType) : LongInt;
+function Real(z : ComplexType) : RealType;
+function Real(z : ComplexType) : Extended;
+
 operator = (a : ComplexType; b : ComplexType) : Boolean;
 operator <> (a : ComplexType; b : ComplexType) : Boolean;
 operator - (a : ComplexType) res : ComplexType;
@@ -341,6 +347,31 @@ end;
 operator Explicit(a : ShortInt) res : ComplexType;
 begin
     res := ComplexNum(a, 0);
+end;
+
+function Int(z : ComplexType) : IntegerType;
+begin
+    Result := system.trunc(z.Re);
+end;
+
+function Int(z : ComplexType) : Int64;
+begin
+    Result := system.trunc(z.Re);
+end;
+
+function Int(z : ComplexType) : LongInt;
+begin
+    Result := system.trunc(z.Re);
+end;
+
+function Real(z : ComplexType) : RealType;
+begin
+    Result := z.Re;
+end;
+
+function Real(z : ComplexType) : Extended;
+begin
+    Result := z.Re;
 end;
 
 procedure Val(x : String; var num : ComplexType; var posError : ShortInt);
