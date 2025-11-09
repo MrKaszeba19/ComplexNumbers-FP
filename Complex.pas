@@ -89,6 +89,8 @@ function Sqrt(a : ComplexType) : ComplexType;
 function MinusOneTo(z : ComplexType) : ComplexType;
 function ImagTo(z : ComplexType) : ComplexType;
 function MinusImagTo(z : ComplexType) : ComplexType;
+function Hypot(a, b : ComplexType) : ComplexType;
+function Hypot(a, b, c : ComplexType) : ComplexType;
 
 function Sin(z : ComplexType) : ComplexType;
 function Cos(z : ComplexType) : ComplexType;
@@ -809,6 +811,18 @@ begin
             end; 
         end else Result := Exp(- z * Imag * Pi * 0.5);
 end;
+
+function Hypot(a, b : ComplexType) : ComplexType;
+begin
+    Result := Sqrt(a*a + b*b);
+end;
+
+function Hypot(a, b, c : ComplexType) : ComplexType;
+begin
+    Result := Sqrt(a*a + b*b + c*c);
+end;
+
+// trig
 
 function Sin(z : ComplexType) : ComplexType;
 begin
